@@ -76,6 +76,12 @@ export default function SideBar() {
                         >
                             Reportes
                         </Link>
+                        <Link
+                            href="/xylem"
+                            className="flex items-center rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        >
+                            xylem
+                        </Link>
                     </nav>
                 </>
             )}
