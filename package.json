@@ -1,7 +1,8 @@
 {
-  "name": "my-app",
-  "version": "0.1.0",
+  "name": "kimenko-frontend",
+  "version": "1.0.0",
   "private": true,
+  "description": "Sistema profesional de análisis de caudal y gestión de datos energéticos - Kimenko",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -9,6 +10,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.9",
     "echarts-for-react": "^3.0.2",
     "lucide-react": "^0.511.0",
     "next": "15.3.2",
@@ -22,7 +25,18 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/xlsx": "^0.0.35",
+    "eslint": "9.28.0",
+    "eslint-config-next": "15.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "author": "Kimenko",
+  "keywords": [
+    "análisis",
+    "caudal",
+    "energía",
+    "kimenko",
+    "next.js",
+    "react"
+  ]
 }

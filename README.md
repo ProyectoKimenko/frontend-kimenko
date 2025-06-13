@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kimenko - Sistema de Análisis de Caudal y Datos
 
-## Getting Started
+Sistema profesional de análisis de caudal y gestión de datos energéticos desarrollado por Kimenko.
 
-First, run the development server:
+## 🚀 Características
 
+- **Análisis de Caudal**: Herramientas avanzadas para análisis de flujo de agua y detección de pérdidas
+- **Análisis Xylem**: Procesamiento de archivos Excel con datos de consumo energético
+- **Gráficos Interactivos**: Visualización de datos con ECharts y análisis estadísticos
+- **Interfaz Profesional**: Diseño moderno con soporte para modo oscuro
+- **Responsive Design**: Compatible con dispositivos móviles y desktop
+
+## 🛠️ Tecnologías
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Estilos**: Tailwind CSS 4
+- **Gráficos**: ECharts para React
+- **Procesamiento**: XLSX para archivos Excel
+- **Iconos**: Lucide React
+
+## 📦 Instalación
+
+1. Clona el repositorio:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <url-del-repositorio>
+cd frontend-kimenko
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Instala las dependencias:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Configura las variables de entorno:
+```bash
+# Crea un archivo .env.local
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Ejecuta el servidor de desarrollo:
+```bash
+npm run dev
+```
 
-## Learn More
+La aplicación estará disponible en [http://localhost:3000](http://localhost:3000).
 
-To learn more about Next.js, take a look at the following resources:
+## 🔧 Configuración de la API
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Por defecto, la aplicación se conecta a `http://localhost:8000`. Para cambiar esta configuración:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Crea un archivo `.env.local` en la raíz del proyecto
+2. Agrega la variable: `NEXT_PUBLIC_API_URL=tu-url-de-api`
 
-## Deploy on Vercel
+## 📁 Estructura del Proyecto
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/                    # Páginas principales
+│   ├── page.tsx           # Análisis de Caudal
+│   ├── xylem/             # Análisis Xylem
+│   └── layout.tsx         # Layout global
+├── components/            # Componentes reutilizables
+│   ├── sideBar.tsx       # Navegación lateral
+│   └── analysis/         # Componentes de análisis
+└── helpers/              # Funciones de utilidad
+    ├── fetchAnalysis.ts  # API de análisis
+    └── fetchPlaces.ts    # API de lugares
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎯 Funcionalidades
+
+### Análisis de Caudal
+- Selección de lugar y parámetros temporales
+- Visualización de datos de flujo vs pérdidas
+- Filtros avanzados y zoom interactivo
+
+### Análisis Xylem
+- Carga de archivos Excel con datos de consumo
+- Procesamiento automático de datos acumulativos
+- Análisis estadístico con tendencias y anomalías
+- Múltiples vistas: horaria, diaria, semanal
+
+## 🚀 Scripts Disponibles
+
+```bash
+npm run dev      # Servidor de desarrollo
+npm run build    # Construir para producción
+npm run start    # Servidor de producción
+npm run lint     # Linter de código
+```
+
+## 🔧 Desarrollo
+
+Para contribuir al proyecto:
+
+1. Crea una rama para tu feature: `git checkout -b feature/nueva-funcionalidad`
+2. Realiza tus cambios siguiendo las convenciones del proyecto
+3. Ejecuta las pruebas: `npm run lint`
+4. Haz commit de tus cambios: `git commit -m "feat: descripción"`
+5. Haz push de la rama: `git push origin feature/nueva-funcionalidad`
+6. Crea un Pull Request
+
+## 📄 Licencia
+
+© 2024 Kimenko. Todos los derechos reservados.
+
+## 📞 Contacto
+
+Para soporte técnico o consultas, visita [kimenko.cl](https://kimenko.cl)

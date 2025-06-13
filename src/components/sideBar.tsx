@@ -1,90 +1,134 @@
 'use client'
 
 import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Home, BarChart3, ChevronLeft, ChevronRight, LogOut, User, Settings, Droplets } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
-    { href: "/", label: "Inicio" },
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/reports", label: "Reportes" },
+    { href: "/admin", label: "Dashboard", icon: Home },
+    { href: "/admin/flowreporter", label: "Análisis FlowReporter", icon: Droplets },
+    { href: "/admin/xylem", label: "Análisis Xylem", icon: BarChart3 },
+    { href: "/admin/settings", label: "Configuración", icon: Settings },
 ];
 
 export default function SideBar() {
-    const [hidden, setHidden] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const pathname = usePathname();
+    const router = useRouter();
+    const { user, logout, loading } = useAuth();
+
+    const handleLogout = async () => {
+        if (loading) return;
+        await logout();
+    };
 
     return (
         <aside
-            className={`transition-all duration-300 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
-                ${hidden ? 'w-0 min-w-0 overflow-hidden p-0' : 'w-56 min-w-[14rem]'}
+            className={`transition-all duration-300 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm flex flex-col
+                ${isCollapsed ? 'w-16' : 'w-64'}
             `}
             style={{ minHeight: '100vh' }}
         >
-            <button
-                aria-label={hidden ? "Mostrar menú lateral" : "Ocultar menú lateral"}
-                onClick={() => setHidden(h => !h)}
-                className={`
-                    absolute top-4 left-4 z-20 bg-gray-200 dark:bg-gray-700 rounded-full p-1 shadow
-                    hover:bg-gray-300 dark:hover:bg-gray-600 transition
-                    ${hidden ? '' : ''}
-                `}
-                style={{
-                    // If hidden, keep button visible at left edge
-                    left: hidden ? '0.5rem' : '15rem',
-                    transition: 'left 0.3s'
-                }}
-            >
-                {hidden ? (
-                    // Show "open" icon
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                ) : (
-                    // Show "close" icon
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                )}
-            </button>
-            {!hidden && (
-                <>
-                    <div className="flex flex-col items-center justify-center gap-3 col-span-2 p-4 ">
-                        <img
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                {!isCollapsed && (
+                    <div className="flex items-center gap-3">
+                        {/* <Image
                             src="https://kimenko.cl/wp-content/uploads/2020/06/cropped-logo3.jpg"
                             alt="Kimenko logo"
-                            className="h-10 w-10 rounded-lg shadow"
-                        />
-                        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            width={32}
+                            height={32}
+                            className="rounded-lg shadow-sm"
+                        /> */}
+                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">
                             Kimenko
                         </h1>
                     </div>
-                    <nav className="p-4 space-y-2 flex-1">
+                )}
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    aria-label={isCollapsed ? "Expandir menú" : "Contraer menú"}
+                >
+                    {isCollapsed ? (
+                        <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                    ) : (
+                        <ChevronLeft className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                    )}
+                </button>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 p-4 space-y-2">
+                {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href;
+
+                    return (
                         <Link
-                            href="/"
-                            className="flex items-center rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                            key={item.href}
+                            href={item.href}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive
+                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                }`}
+                            title={isCollapsed ? item.label : undefined}
                         >
-                            Inicio
+                            <Icon className={`h-5 w-5 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                            {!isCollapsed && (
+                                <span>{item.label}</span>
+                            )}
+                            {isActive && !isCollapsed && (
+                                <div className="ml-auto h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400" />
+                            )}
                         </Link>
-                        <Link
-                            href="/dashboard"
-                            className="flex items-center rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    );
+                })}
+            </nav>
+
+            {/* User Section */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                {user && (
+                    <div className="space-y-2">
+                        {/* User Info */}
+                        {!isCollapsed && (
+                            <div className="flex items-center gap-3 px-3 py-2 text-sm">
+                                <div className="flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-gray-900 dark:text-white font-medium truncate">
+                                        {user.email?.split('@')[0] || 'Usuario'}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                        {user.email}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Logout Button */}
+                        <button
+                            onClick={handleLogout}
+                            disabled={loading}
+                            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors
+                                ${loading
+                                    ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                                    : 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                }`}
+                            title={isCollapsed ? "Cerrar sesión" : undefined}
                         >
-                            Dashboard
-                        </Link>
-                        <Link
-                            href="/reports"
-                            className="flex items-center rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        >
-                            Reportes
-                        </Link>
-                        <Link
-                            href="/xylem"
-                            className="flex items-center rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        >
-                            xylem
-                        </Link>
-                    </nav>
-                </>
-            )}
+                            <LogOut className="h-5 w-5" />
+                            {!isCollapsed && (
+                                <span>{loading ? 'Cerrando...' : 'Cerrar sesión'}</span>
+                            )}
+                        </button>
+                    </div>
+                )}
+            </div>
         </aside>
     );
 }

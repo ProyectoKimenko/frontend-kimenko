@@ -1,5 +1,17 @@
+import type { Metadata } from "next";
 import "./globals.css";
-import SideBar from "@/components/sideBar";
+import PerformanceMonitor from "@/components/PerformanceMonitor";
+
+export const metadata: Metadata = {
+  title: "Kimenko - Análisis de Caudal y Datos",
+  description: "Sistema profesional de análisis de caudal y gestión de datos energéticos desarrollado por Kimenko",
+  keywords: ["análisis", "caudal", "energía", "Kimenko", "datos", "gráficos"],
+  authors: [{ name: "Kimenko" }],
+  creator: "Kimenko",
+  publisher: "Kimenko",
+  viewport: "width=device-width, initial-scale=1",
+  robots: "index, follow",
+};
 
 export default function RootLayout({
   children,
@@ -7,14 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-          <SideBar />
-          <main className="flex-1 p-6 md:ml-20">
-            {children}
-          </main>
-        </div>
+    <html lang="es">
+      <body className="antialiased">
+        {children}
+        <PerformanceMonitor />
       </body>
     </html>
   );

@@ -6,16 +6,11 @@ import ChartXylem from "@/components/analysis/chartXylem";
 import {
     Upload,
     FileSpreadsheet,
-    Calendar,
     BarChart3,
     AlertCircle,
     CheckCircle,
     Trash2,
-    Download,
     Info,
-    TrendingUp,
-    Database,
-    FileText
 } from "lucide-react";
 
 interface XylemData {
@@ -35,6 +30,8 @@ interface ProcessedData {
         };
     };
 }
+
+type CellValue = string | number | Date | boolean;
 
 export default function XylemPage() {
     const [data, setData] = useState<ProcessedData | null>(null);
@@ -59,7 +56,7 @@ export default function XylemPage() {
             const timeSeriesData: XylemData[] = [];
 
             // Buscar las columnas importantes
-            const headers = (jsonData[0] as any[])?.map(h => String(h).toLowerCase().trim()) || [];
+            const headers = (jsonData[0] as CellValue[])?.map(h => String(h).toLowerCase().trim()) || [];
             const timestampCol = headers.findIndex(h =>
                 h.includes('fecha') || h.includes('date') || h.includes('timestamp') || h.includes('tiempo')
             );
@@ -80,7 +77,7 @@ export default function XylemPage() {
 
             // Procesar cada fila de datos
             for (let i = 1; i < jsonData.length; i++) {
-                const row = jsonData[i] as any[];
+                const row = jsonData[i] as CellValue[];
 
                 if (!row || row.length === 0) continue;
 
@@ -99,7 +96,7 @@ export default function XylemPage() {
                     timestamp = new Date((timestampValue - 25569) * 86400 * 1000);
                 } else {
                     // String timestamp
-                    timestamp = new Date(timestampValue);
+                    timestamp = new Date(String(timestampValue));
                     if (isNaN(timestamp.getTime())) {
                         console.warn(`Fila ${i + 1}: Fecha inválida - ${timestampValue}`);
                         continue;
@@ -183,8 +180,9 @@ export default function XylemPage() {
                 processedData.metadata!.filename = file.name;
                 setData(processedData);
             }
-        } catch (error: any) {
-            setError(error.message || "Error al procesar el archivo Excel");
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Error al procesar el archivo Excel";
+            setError(errorMessage);
             setData(null);
         } finally {
             setLoading(false);

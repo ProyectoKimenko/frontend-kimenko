@@ -1,0 +1,217 @@
+'use client'
+
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import { useRouter } from 'next/navigation'
+import type { User } from '@supabase/supabase-js'
+
+interface AuthState {
+    user: User | null
+    loading: boolean
+    error: string | null
+}
+
+// Global state to prevent multiple simultaneous auth checks
+let globalAuthState: AuthState | null = null
+let authInitPromise: Promise<AuthState> | null = null
+let listeners: Set<(state: AuthState) => void> = new Set()
+
+export function useAuth() {
+    const router = useRouter()
+    const [authState, setAuthState] = useState<AuthState>(() =>
+        globalAuthState || { user: null, loading: true, error: null }
+    )
+    const isInitializedRef = useRef(false)
+
+    // Subscribe to global auth state changes
+    useEffect(() => {
+        const updateState = (newState: AuthState) => {
+            setAuthState(newState)
+        }
+
+        listeners.add(updateState)
+
+        return () => {
+            listeners.delete(updateState)
+        }
+    }, [])
+
+    // Broadcast state changes to all useAuth instances
+    const broadcastStateChange = useCallback((newState: AuthState) => {
+        globalAuthState = newState
+        listeners.forEach(listener => listener(newState))
+    }, [])
+
+    // Initialize auth state (only once globally)
+    useEffect(() => {
+        if (isInitializedRef.current) return
+        isInitializedRef.current = true
+
+        const initAuth = async (): Promise<AuthState> => {
+            // If already initializing, wait for it
+            if (authInitPromise) {
+                return authInitPromise
+            }
+
+            // If already initialized, return cached state
+            if (globalAuthState && !globalAuthState.loading) {
+                return globalAuthState
+            }
+
+            authInitPromise = (async () => {
+                try {
+                    const supabase = createClient()
+
+                    // Get initial session with timeout
+                    const sessionPromise = supabase.auth.getSession()
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Auth timeout')), 5000)
+                    )
+
+                    const { data: { session }, error } = await Promise.race([
+                        sessionPromise,
+                        timeoutPromise
+                    ]) as any
+
+                    if (error) {
+                        const errorState = { user: null, loading: false, error: error.message }
+                        broadcastStateChange(errorState)
+                        return errorState
+                    }
+
+                    const initialState = {
+                        user: session?.user ?? null,
+                        loading: false,
+                        error: null
+                    }
+
+                    broadcastStateChange(initialState)
+
+                    // Listen for auth changes (only set up once)
+                    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+                        async (event, session) => {
+                            const newState = {
+                                user: session?.user ?? null,
+                                loading: false,
+                                error: null
+                            }
+
+                            broadcastStateChange(newState)
+
+                            // Redirect on sign out
+                            if (event === 'SIGNED_OUT') {
+                                // Add slight delay to prevent race conditions
+                                setTimeout(() => router.push('/login'), 100)
+                            }
+                        }
+                    )
+
+                    // Cleanup subscription when no more listeners
+                    const originalUnsubscribe = subscription.unsubscribe
+                    subscription.unsubscribe = () => {
+                        if (listeners.size === 0) {
+                            originalUnsubscribe()
+                        }
+                    }
+
+                    return initialState
+                } catch (error) {
+                    const errorState = {
+                        user: null,
+                        loading: false,
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    }
+                    broadcastStateChange(errorState)
+                    return errorState
+                } finally {
+                    authInitPromise = null
+                }
+            })()
+
+            return authInitPromise
+        }
+
+        initAuth()
+    }, [router, broadcastStateChange])
+
+    // Optimized login function
+    const login = useCallback(async (email: string, password: string) => {
+        const loadingState = { ...globalAuthState!, loading: true, error: null }
+        broadcastStateChange(loadingState)
+
+        try {
+            const supabase = createClient()
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            })
+
+            if (error) {
+                const errorState = { ...globalAuthState!, loading: false, error: error.message }
+                broadcastStateChange(errorState)
+                return { success: false, error: error.message }
+            }
+
+            const successState = {
+                user: data.user,
+                loading: false,
+                error: null
+            }
+            broadcastStateChange(successState)
+
+            return { success: true, error: null }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Login failed'
+            const errorState = { ...globalAuthState!, loading: false, error: errorMessage }
+            broadcastStateChange(errorState)
+            return { success: false, error: errorMessage }
+        }
+    }, [broadcastStateChange])
+
+    // Optimized logout function
+    const logout = useCallback(async () => {
+        const loadingState = { ...globalAuthState!, loading: true, error: null }
+        broadcastStateChange(loadingState)
+
+        try {
+            const supabase = createClient()
+            const { error } = await supabase.auth.signOut()
+
+            if (error) {
+                const errorState = { ...globalAuthState!, loading: false, error: error.message }
+                broadcastStateChange(errorState)
+                return { success: false, error: error.message }
+            }
+
+            const loggedOutState = { user: null, loading: false, error: null }
+            broadcastStateChange(loggedOutState)
+
+            // Navigate after state update
+            setTimeout(() => router.push('/login'), 100)
+            return { success: true, error: null }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Logout failed'
+            const errorState = { ...globalAuthState!, loading: false, error: errorMessage }
+            broadcastStateChange(errorState)
+            return { success: false, error: errorMessage }
+        }
+    }, [router, broadcastStateChange])
+
+    // Clear error
+    const clearError = useCallback(() => {
+        if (globalAuthState?.error) {
+            const clearedState = { ...globalAuthState, error: null }
+            broadcastStateChange(clearedState)
+        }
+    }, [broadcastStateChange])
+
+    return {
+        user: authState.user,
+        loading: authState.loading,
+        error: authState.error,
+        isAuthenticated: !!authState.user,
+        login,
+        logout,
+        clearError
+    }
+} 
