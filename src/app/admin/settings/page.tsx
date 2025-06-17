@@ -1,4 +1,4 @@
-// 'use client'
+'use client'
 
 // import { useAuth } from '@/hooks/useAuth';
 // import { Settings, User, Shield, Bell, Palette, Database } from 'lucide-react';
