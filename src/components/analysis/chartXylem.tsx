@@ -1,8 +1,8 @@
 'use client'
 import React, { useMemo, useState, useCallback, useRef } from 'react'
 import ReactECharts from 'echarts-for-react'
+import PDFReportGenerator from '../reports/PDFReportGenerator'
 import {
-    Download,
     Calendar,
     TrendingUp,
     TrendingDown,
@@ -10,19 +10,17 @@ import {
     AlertTriangle,
     BarChart3,
     Settings,
-    Filter,
     Eye,
-    EyeOff,
-    RefreshCw,
     FileText,
     Share2
 } from 'lucide-react'
 
-import type { AnalysisStats, XylemData, XylemDataItem, TooltipParams, DateRange } from '../../types/components/analysis/typesXylem'
+import type { AnalysisStats, XylemData, XylemDataItem, TooltipParams } from '../../types/components/analysis/typesXylem'
+import type { PDFReportData } from '../../types/components/reports/typesPDFReport'
 
 type ViewMode = 'hourly' | 'daily' | 'weekly' | 'monthly';
 type ChartType = 'line' | 'bar';
-type ExportFormat = 'csv' | 'pdf' | 'png';
+type ExportFormat = 'csv' | 'png';
 
 export default function ChartXylem({ data }: { data: XylemData }) {
     // Enhanced state management
@@ -32,26 +30,21 @@ export default function ChartXylem({ data }: { data: XylemData }) {
     const [showMovingAverage, setShowMovingAverage] = useState(true);
     const [showAnomalies, setShowAnomalies] = useState(true);
     const [showPrediction, setShowPrediction] = useState(false);
-    const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null });
+    // const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null });
     const [alertThreshold, setAlertThreshold] = useState<number>(0);
     const [isExporting, setIsExporting] = useState(false);
-    const [selectedMetric, setSelectedMetric] = useState<'consumption' | 'efficiency' | 'cost'>('consumption');
+    const [chartReady, setChartReady] = useState(false);
 
-    const chartRef = useRef<any>(null);
+    const chartRef = useRef<ReactECharts>(null);
 
     // Enhanced data processing with date filtering
     const filteredData = useMemo(() => {
-        if (!data?.time_series || (!dateRange.start && !dateRange.end)) {
+        if (!data?.time_series) {
             return data?.time_series || [];
         }
 
-        return data.time_series.filter(item => {
-            const itemDate = new Date(Number(item.timestamp));
-            const isAfterStart = !dateRange.start || itemDate >= dateRange.start;
-            const isBeforeEnd = !dateRange.end || itemDate <= dateRange.end;
-            return isAfterStart && isBeforeEnd;
-        });
-    }, [data, dateRange]);
+        return data.time_series;
+    }, [data]);
 
     // Process date labels with enhanced formatting
     const rawDateLabels = useMemo(() => {
@@ -173,7 +166,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
         return { values, labels, dates };
     }, [rawIncrementalData, viewMode]);
 
-    const { values: incrementalValues, labels: dateLabels, dates: dateSeries } = processedData;
+    const { values: incrementalValues, labels: dateLabels } = processedData;
 
     // Enhanced statistical analysis
     const analysisStats = useMemo((): AnalysisStats => {
@@ -355,7 +348,210 @@ export default function ChartXylem({ data }: { data: XylemData }) {
         return predictions;
     }, [showPrediction, incrementalValues, trendLine, analysisStats.average]);
 
-    // Export functions
+    // FUNCIÓN MEJORADA para capturar la imagen del gráfico con dimensiones correctas
+    const captureChartImage = useCallback((): Promise<string | null> => {
+        return new Promise((resolve) => {
+            console.log('Starting chart capture...')
+            
+            // Verificar que el chart ref existe
+            if (!chartRef.current) {
+                console.error('Chart reference not available')
+                resolve(null)
+                return
+            }
+
+            try {
+                const chartInstance = chartRef.current.getEchartsInstance()
+                
+                if (!chartInstance) {
+                    console.error('Chart instance not available')
+                    resolve(null)
+                    return
+                }
+
+                // Esperar un momento más largo para asegurar renderizado completo
+                setTimeout(() => {
+                    try {
+                        // Obtener las dimensiones reales del contenedor del gráfico
+                        const chartInstance = chartRef.current?.getEchartsInstance()
+                        const chartContainer = chartInstance?.getDom()
+                        const containerWidth = chartContainer?.offsetWidth || 800
+                        const containerHeight = chartContainer?.offsetHeight || 500
+                        
+                        console.log(`Chart container dimensions: ${containerWidth}x${containerHeight}`)
+
+                        // Configuración óptima para captura
+                        const captureConfig = {
+                            type: 'png' as const,
+                            pixelRatio: 2, // Alta calidad pero no excesiva
+                            backgroundColor: '#ffffff',
+                            excludeComponents: ['toolbox', 'dataZoom'], // Excluir elementos interactivos
+                            // Usar las dimensiones reales del contenedor
+                            width: containerWidth,
+                            height: containerHeight
+                        }
+
+                        console.log('Capture config:', captureConfig)
+
+                        // Capturar la imagen
+                        const imageData = chartInstance?.getDataURL(captureConfig)
+                        
+                        // Verificar que la imagen se capturó correctamente
+                        if (imageData && imageData.startsWith('data:image/png;base64,')) {
+                            console.log('Chart image captured successfully')
+                            console.log('Image data length:', imageData.length)
+                            resolve(imageData)
+                        } else {
+                            console.error('Invalid image data captured')
+                            resolve(null)
+                        }
+
+                    } catch (error) {
+                        console.error('Error during chart capture:', error)
+                        resolve(null)
+                    }
+                }, 500) // Esperar más tiempo para asegurar renderizado completo
+
+            } catch (error) {
+                console.error('Error accessing chart instance:', error)
+                resolve(null)
+            }
+        })
+    }, [])
+
+    // Callback cuando el gráfico está listo
+    const onChartReady = useCallback(() => {
+        console.log('Chart is ready')
+        setChartReady(true)
+        
+        // Esperar un poco más para asegurar que esté completamente renderizado
+        setTimeout(() => {
+            console.log('Chart fully rendered and ready for capture')
+        }, 200)
+    }, [])
+
+    // FUNCIÓN MEJORADA para preparar datos del PDF
+    const preparePDFReportData = useCallback(async (): Promise<PDFReportData> => {
+        console.log('Preparing PDF data...')
+        console.log('Chart ready status:', chartReady)
+        
+        // Esperar un momento adicional si el gráfico no está listo
+        if (!chartReady) {
+            console.log('Waiting for chart to be ready...')
+            await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+
+        // Capturar imagen del gráfico
+        const chartImage = await captureChartImage()
+        
+        if (chartImage) {
+            console.log('✅ Chart image successfully captured for PDF')
+        } else {
+            console.warn('⚠️ Chart image could not be captured')
+        }
+
+        // Simplified key metrics - only the most important ones
+        const keyMetrics = [
+            {
+                title: 'Consumo Total',
+                value: analysisStats.totalConsumption.toLocaleString(),
+                subtitle: unit,
+                color: [30, 64, 175] // Blue
+            },
+            {
+                title: 'Promedio',
+                value: analysisStats.average.toString(),
+                subtitle: `${unit}/día`,
+                color: [5, 150, 105] // Green
+            },
+            {
+                title: 'Tendencia',
+                value: `${Math.abs(analysisStats.trendPercentage)}%`,
+                subtitle: analysisStats.trend,
+                color: analysisStats.trend === 'creciente' ? [220, 38, 38] : 
+                       analysisStats.trend === 'decreciente' ? [5, 150, 105] : [245, 158, 11]
+            },
+            {
+                title: 'Eficiencia',
+                value: `${analysisStats.efficiency}%`,
+                subtitle: 'Rendimiento',
+                color: analysisStats.efficiency > 80 ? [5, 150, 105] : [245, 158, 11]
+            }
+        ];
+
+        // Simplified statistical summary - only essential metrics
+        const statisticalSummary = {
+            headers: ['Métrica', 'Valor', 'Unidad', 'Observación'],
+            rows: [
+                ['Promedio', analysisStats.average.toString(), unit, 'Consumo medio'],
+                ['Máximo', analysisStats.peakConsumption.value.toString(), unit, 'Pico registrado'],
+                ['Mínimo', analysisStats.minConsumption.value.toString(), unit, 'Mínimo registrado'],
+                ['Desviación', analysisStats.standardDeviation.toString(), unit, 'Variabilidad'],
+                ['Anomalías', analysisStats.anomalies.length.toString(), 'eventos', 'Valores atípicos']
+            ]
+        };
+
+        // Simplified projections
+        const projections = {
+            headers: ['Período', 'Estimación', 'Método'],
+            rows: [
+                ['Semanal', `${analysisStats.weeklyAverage} ${unit}`, 'Promedio × 7'],
+                ['Mensual', `${analysisStats.monthlyAverage} ${unit}`, 'Promedio × 30'],
+                ['Anual', `${(analysisStats.dailyAverage * 365).toFixed(0)} ${unit}`, 'Proyección lineal']
+            ]
+        };
+
+        // Simplified insights - only the most important ones
+        const insights = [];
+        
+        if (analysisStats.trend === 'creciente') {
+            insights.push(`Tendencia creciente del ${analysisStats.trendPercentage}%. Se recomienda implementar medidas de eficiencia.`);
+        } else if (analysisStats.trend === 'decreciente') {
+            insights.push(`Tendencia decreciente del ${Math.abs(analysisStats.trendPercentage)}%. Mantener las buenas prácticas.`);
+        }
+
+        if (analysisStats.anomalies.length > 0) {
+            insights.push(`Se detectaron ${analysisStats.anomalies.length} anomalías que requieren investigación.`);
+        }
+
+        if (analysisStats.efficiency < 70) {
+            insights.push(`Eficiencia del ${analysisStats.efficiency}% indica oportunidades de mejora.`);
+        }
+
+        // Simplified recommendations - only high priority
+        const recommendationRows = [];
+        
+        if (analysisStats.trend === 'creciente') {
+            recommendationRows.push(['ALTA', 'Optimizar consumo', 'Implementar medidas de ahorro', '1-2 meses']);
+        }
+        
+        if (analysisStats.anomalies.length > 3) {
+            recommendationRows.push(['MEDIA', 'Investigar anomalías', 'Analizar eventos atípicos', '2-4 semanas']);
+        }
+
+        const recommendations = recommendationRows.length > 0 ? {
+            headers: ['Prioridad', 'Acción', 'Descripción', 'Plazo'],
+            rows: recommendationRows
+        } : undefined;
+
+        return {
+            title: 'Análisis ',
+            subtitle: `Vista ${viewMode} - ${new Date().toLocaleDateString('es-ES')}`,
+            metadata: {
+                'Período analizado': data?.metadata ? 
+                    `${data.metadata.dateRange.start} - ${data.metadata.dateRange.end}` : 'N/A',
+                'Total de registros': data?.metadata?.totalRecords.toLocaleString() || '0'
+            },
+            keyMetrics,
+            statisticalSummary,
+            projections,
+            chartImage: chartImage || undefined, // Imagen capturada correctamente
+            insights: insights.slice(0, 3),
+            recommendations
+        };
+    }, [analysisStats, unit, data, viewMode, captureChartImage, chartReady]);
+
+    // Simplified export function (removed PDF)
     const exportData = useCallback(async (format: ExportFormat) => {
         setIsExporting(true);
 
@@ -432,7 +628,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
             animationDuration: 750,
             animationEasing: 'cubicOut',
             title: {
-                text: `${selectedMetric === 'consumption' ? 'Energy Consumption' : selectedMetric === 'efficiency' ? 'Efficiency' : 'Cost'} Analysis`,
+                text: `análisis de consumo`,
                 subtext: `${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} view • ${analysisStats.trend === 'creciente' ? '↗' : analysisStats.trend === 'decreciente' ? '↘' : '→'} ${Math.abs(analysisStats.trendPercentage)}% trend`,
                 left: 'center',
                 textStyle: {
@@ -453,7 +649,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                     'Consumption',
                     ...(showMovingAverage ? ['7-day Average', '14-day Average'] : []),
                     ...(showTrendline ? ['Trend Line'] : []),
-                    ...(showPrediction ? ['Prediction'] : []),
+                    // ...(showPrediction ? ['Prediction'] : []),
                     ...(showAnomalies ? ['Anomalies'] : [])
                 ],
                 textStyle: {
@@ -466,7 +662,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                     '7-day Average': showMovingAverage,
                     '14-day Average': false,
                     'Trend Line': showTrendline,
-                    'Prediction': showPrediction,
+                    // 'Prediction': showPrediction,
                     'Anomalies': showAnomalies
                 }
             },
@@ -537,18 +733,18 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                 feature: {
                     dataZoom: {
                         yAxisIndex: 'none',
-                        title: { zoom: 'Zoom', back: 'Reset Zoom' },
+                        title: { zoom: 'Ampliar', back: 'Restablecer Vista' },
                         icon: {
                             zoom: 'M12.9 14.32a8 8 0 1 1 1.41-1.41l5.35 5.33-1.42 1.42-5.33-5.34zM8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z',
                             back: 'M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z'
                         }
                     },
                     restore: {
-                        title: 'Restore View',
+                        title: 'Restablecer Vista',
                         icon: 'M4 12a8 8 0 0 1 8-8V2.5L16 6l-4 3.5V8a6 6 0 0 0-6 6c0 1 .2 2 .6 2.9l-1.5.8A8 8 0 0 1 4 12zm16 0a8 8 0 0 1-8 8v1.5L8 18l4-3.5V16a6 6 0 0 0 6-6c0-1-.2-2-.6-2.9l1.5-.8A8 8 0 0 1 20 12z'
                     },
                     saveAsImage: {
-                        title: 'Save as Image',
+                        title: 'Guardar como Imagen',
                         name: `xylem-analysis-${viewMode}`,
                         pixelRatio: 2
                     }
@@ -594,7 +790,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
             },
             yAxis: {
                 type: 'value',
-                name: `${selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)} (${unit})`,
+                name: `Consumo`,
                 nameTextStyle: {
                     color: '#64748b',
                     fontSize: 13,
@@ -717,7 +913,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                 // Moving averages
                 ...(showMovingAverage ? [
                     {
-                        name: '7-day Average',
+                        name: 'Promedio 7 días',
                         type: 'line',
                         smooth: true,
                         symbol: 'none',
@@ -730,7 +926,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                         data: movingAverages.ma7
                     },
                     {
-                        name: '14-day Average',
+                        name: 'Promedio 14 días',
                         type: 'line',
                         smooth: true,
                         symbol: 'none',
@@ -746,7 +942,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
 
                 // Trend line
                 ...(showTrendline ? [{
-                    name: 'Trend Line',
+                    name: 'Línea de Tendencia',
                     type: 'line',
                     smooth: false,
                     symbol: 'none',
@@ -761,7 +957,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
 
                 // Prediction line
                 ...(showPrediction ? [{
-                    name: 'Prediction',
+                    name: 'Predicción',
                     type: 'line',
                     smooth: true,
                     symbol: 'diamond',
@@ -782,7 +978,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
             ]
         };
     }, [
-        viewMode, chartType, selectedMetric, dateLabels, incrementalValues,
+        viewMode, chartType, dateLabels, incrementalValues,
         showMovingAverage, showTrendline, showPrediction, showAnomalies,
         movingAverages, trendLine, predictionLine, analysisStats, unit
     ]);
@@ -794,10 +990,10 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                            Energy Consumption Analytics
+                            Análisis de Consumo 
                         </h2>
                         <p className="text-gray-600 dark:text-gray-300">
-                            Advanced analysis with predictive insights and anomaly detection
+                            Análisis avanzado con perspectivas predictivas y detección de anomalías
                         </p>
                     </div>
 
@@ -824,7 +1020,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                 {analysisStats.efficiency.toFixed(0)}%
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Efficiency</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Eficiencia</div>
                         </div>
                         <div className="text-center">
                             <div className={`text-2xl font-bold flex items-center justify-center gap-1 ${analysisStats.anomalies.length > 0 ? 'text-orange-500' : 'text-green-500'
@@ -832,7 +1028,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                                 {analysisStats.anomalies.length > 0 && <AlertTriangle className="h-5 w-5" />}
                                 {analysisStats.anomalies.length}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">Anomalies</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Anomalías</div>
                         </div>
                     </div>
                 </div>
@@ -844,7 +1040,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                     <div className="flex items-center gap-2 mb-4">
                         <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Analysis Configuration
+                            Configuración de Análisis
                         </h3>
                     </div>
 
@@ -852,55 +1048,38 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                         {/* View Mode */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Time Period
+                                Período de Tiempo
                             </label>
                             <select
                                 value={viewMode}
                                 onChange={(e) => setViewMode(e.target.value as ViewMode)}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
-                                <option value="hourly">Hourly</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
+                                <option value="hourly">Por Hora</option>
+                                <option value="daily">Diario</option>
+                                <option value="weekly">Semanal</option>
+                                <option value="monthly">Mensual</option>
                             </select>
                         </div>
 
                         {/* Chart Type */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Chart Type
+                                Tipo de Gráfico
                             </label>
                             <select
                                 value={chartType}
                                 onChange={(e) => setChartType(e.target.value as ChartType)}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
-                                <option value="line">Line</option>
-                                <option value="bar">Bar</option>
+                                <option value="line">Línea</option>
+                                <option value="bar">Barras</option>
                             </select>
                         </div>
-
-                        {/* Metric Selection */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Metric
-                            </label>
-                            <select
-                                value={selectedMetric}
-                                onChange={(e) => setSelectedMetric(e.target.value as 'consumption' | 'efficiency' | 'cost')}
-                                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="consumption">Consumption</option>
-                                <option value="efficiency">Efficiency</option>
-                                <option value="cost">Cost</option>
-                            </select>
-                        </div>
-
                         {/* Alert Threshold */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Alert Threshold
+                                Umbral de Alerta
                             </label>
                             <input
                                 type="number"
@@ -914,7 +1093,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                         {/* Export Options */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Export Data
+                                Exportar Datos
                             </label>
                             <div className="flex gap-2">
                                 <button
@@ -934,19 +1113,34 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                             </div>
                         </div>
 
-                        {/* Refresh Button */}
+                        {/* PDF Report */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Actions
+                                Reporte Completo
+                            </label>
+                            <PDFReportGenerator
+                                preparePDFData={preparePDFReportData} // Función asíncrona
+                                options={{
+                                    filename: `xylem-report-${viewMode}-${new Date().toISOString().slice(0, 10)}.pdf`
+                                }}
+                                buttonText="📄 Reporte PDF"
+                                className="w-full text-sm"
+                            />
+                        </div>
+
+                        {/* Refresh */}
+                        {/* <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Actualizar
                             </label>
                             <button
                                 onClick={() => window.location.reload()}
                                 className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
                             >
                                 <RefreshCw className="h-4 w-4" />
-                                Refresh
+                                Actualizar
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
@@ -954,7 +1148,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                 <div className="p-6">
                     <div className="flex flex-wrap items-center gap-6">
                         <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Display Options:</span>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Opciones de Visualización:</span>
                         </div>
 
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -964,7 +1158,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                                 onChange={(e) => setShowMovingAverage(e.target.checked)}
                                 className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                             />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Moving Averages</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Promedios Móviles</span>
                         </label>
 
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -974,7 +1168,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                                 onChange={(e) => setShowTrendline(e.target.checked)}
                                 className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                             />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Trend Line</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Línea de Tendencia</span>
                         </label>
 
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -984,7 +1178,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                                 onChange={(e) => setShowAnomalies(e.target.checked)}
                                 className="rounded border-gray-300 dark:border-gray-600 text-orange-600 focus:ring-orange-500"
                             />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Anomaly Detection</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Detección de Anomalías</span>
                         </label>
 
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -994,27 +1188,27 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                                 onChange={(e) => setShowPrediction(e.target.checked)}
                                 className="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500"
                             />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Predictions</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Predicciones</span>
                         </label>
                     </div>
                 </div>
             </div>
 
-            {/* Main Chart */}
+            {/* Main Chart - CONFIGURACIÓN MEJORADA */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <BarChart3 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                Interactive Chart
+                                Gráfico Interactivo
                             </h3>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {incrementalValues.length} data points
+                                {incrementalValues.length} datos
                             </div>
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <div className={`w-2 h-2 rounded-full ${chartReady ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                         </div>
                     </div>
                 </div>
@@ -1023,8 +1217,25 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                     <ReactECharts
                         ref={chartRef}
                         option={chartConfiguration}
-                        style={{ height: '500px', width: '100%' }}
-                        opts={{ renderer: 'canvas', devicePixelRatio: 2 }}
+                        style={{ 
+                            height: '500px', 
+                            width: '100%',
+                            minHeight: '500px' // Asegurar altura mínima
+                        }}
+                        opts={{ 
+                            renderer: 'canvas', 
+                            devicePixelRatio: 2,
+                            width: 'auto',
+                            height: 'auto'
+                        }}
+                        onChartReady={onChartReady}
+                        onEvents={{
+                            // Evento adicional para confirmar que el gráfico está completamente renderizado
+                            'finished': () => {
+                                console.log('Chart rendering finished')
+                                setChartReady(true)
+                            }
+                        }}
                     />
                 </div>
             </div>
@@ -1102,7 +1313,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                         <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                             <div className="flex items-center gap-2 mb-2">
                                 <TrendingUp className="h-4 w-4 text-red-600" />
-                                <span className="text-sm font-medium text-red-700 dark:text-red-300">Peak Consumption</span>
+                                <span className="text-sm font-medium text-red-700 dark:text-red-300">Consumo Máximo</span>
                             </div>
                             <div className="text-xl font-bold text-red-600 dark:text-red-400">
                                 {analysisStats.peakConsumption.value} {unit}
@@ -1129,7 +1340,7 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                             <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Eye className="h-4 w-4 text-purple-600" />
-                                    <span className="text-sm font-medium text-purple-700 dark:text-purple-300">Next Period Prediction</span>
+                                    <span className="text-sm font-medium text-purple-700 dark:text-purple-300">Predicción Próximo Período</span>
                                 </div>
                                 <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
                                     {analysisStats.predictedNext} {unit}
@@ -1178,19 +1389,19 @@ export default function ChartXylem({ data }: { data: XylemData }) {
                                 <div className="flex items-center gap-2 mb-2">
                                     <AlertTriangle className="h-4 w-4 text-orange-600" />
                                     <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                                        Anomalies Detected
+                                        Anomalías Detectadas
                                     </span>
                                 </div>
                                 <div className="text-xs text-orange-600 dark:text-orange-400">
-                                    {analysisStats.anomalies.length} unusual patterns found in your data.
-                                    Review the highlighted points in the chart for more details.
+                                    {analysisStats.anomalies.length} patrones inusuales encontrados en tus datos.
+                                                                          Revisa los puntos destacados en el gráfico para más detalles.
                                 </div>
                             </div>
                         )}
 
                         <div className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
                             <FileText className="h-4 w-4 inline mr-1" />
-                            Analysis updated in real-time
+                                                            Análisis actualizado en tiempo real
                         </div>
                     </div>
                 </div>

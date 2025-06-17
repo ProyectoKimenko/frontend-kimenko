@@ -1,28 +1,23 @@
 "use client";
 
 import Chart from "@/components/analysis/chart";
-import { fetchAnalysis } from "@/helpers/fetchAnalysis";
+import { fetchAnalysis, fetchReport } from "@/helpers/fetchAnalysis";
 import { fetchPlaces } from "@/helpers/fetchPlaces";
+import NewPlaceForm from "@/components/flowReporter/newPlaceForm";
+import ParameterForm from "@/components/flowReporter/parameterForm";
+import ForceScrapeForm from "@/components/flowReporter/forceScrapeForm";
 import { AnalysisResponse } from "@/types/helpers/typesFetchAnalysis";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import {
-    BarChart3,
     Droplets,
-    Calendar,
-    MapPin,
-    TrendingUp,
-    TrendingDown,
-    Activity,
     AlertTriangle,
     Download,
     RefreshCw,
-    Settings
+    CheckCircle
 } from "lucide-react";
 
 export default function FlowReporterAnalysis() {
-    const { user } = useAuth();
     const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -31,42 +26,10 @@ export default function FlowReporterAnalysis() {
     const [windowSize, setWindowSize] = useState<number>(60);
     const [placeId, setPlaceId] = useState<number | "">("");
     const [loading, setLoading] = useState<boolean>(false);
+    const [loadingReport, setLoadingReport] = useState<boolean>(false);
+    const [reportSuccess, setReportSuccess] = useState<boolean>(false);
     const [places, setPlaces] = useState<Place[]>([]);
 
-    // Enhanced analytics calculations
-    const analyticsStats = analysis?.time_series ? (() => {
-        const flowRates = analysis.time_series.map(item => Number(item.flow_rate));
-        const rollingMins = analysis.time_series.map(item => Number(item.RollingMin));
-
-        const avgFlowRate = flowRates.reduce((acc, val) => acc + val, 0) / flowRates.length;
-        const maxFlowRate = Math.max(...flowRates);
-        const minFlowRate = Math.min(...flowRates);
-
-        const totalWaterLoss = rollingMins.filter(val => val > 0).reduce((acc, val) => acc + val, 0);
-        const avgWaterLoss = totalWaterLoss / rollingMins.filter(val => val > 0).length || 0;
-
-        const efficiency = Math.max(0, 100 - (avgWaterLoss / avgFlowRate) * 100);
-
-        const trend = flowRates.length > 1 ?
-            (flowRates[flowRates.length - 1] > flowRates[0] ? 'increasing' : 'decreasing') : 'stable';
-
-        const anomalies = flowRates.filter((rate, index) => {
-            const deviation = Math.abs(rate - avgFlowRate);
-            return deviation > (2 * Math.sqrt(flowRates.reduce((acc, val) => acc + Math.pow(val - avgFlowRate, 2), 0) / flowRates.length));
-        }).length;
-
-        return {
-            avgFlowRate: avgFlowRate.toFixed(2),
-            maxFlowRate: maxFlowRate.toFixed(2),
-            minFlowRate: minFlowRate.toFixed(2),
-            totalWaterLoss: totalWaterLoss.toFixed(2),
-            avgWaterLoss: avgWaterLoss.toFixed(2),
-            efficiency: efficiency.toFixed(1),
-            trend,
-            anomalies,
-            dataPoints: flowRates.length
-        };
-    })() : null;
 
     // Fetch places on mount
     useEffect(() => {
@@ -139,11 +102,6 @@ export default function FlowReporterAnalysis() {
         }
     }, [windowSize, startWeek, endWeek, year, placeId, validateParams]);
 
-    const handlePlaceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
-        setPlaceId(value ? Number(value) : "");
-    };
-
     const exportData = () => {
         if (!analysis) return;
         const dataStr = JSON.stringify(analysis, null, 2);
@@ -155,6 +113,37 @@ export default function FlowReporterAnalysis() {
         link.click();
         URL.revokeObjectURL(url);
     };
+
+    const handleReport = useCallback(async () => {
+        setError(null);
+        setReportSuccess(false);
+        
+        // Validate parameters
+        if (!validateParams()) return;
+        
+        setLoadingReport(true);
+        try {
+            const reportResult = await fetchReport({
+                window_size: windowSize,
+                start_week: startWeek,
+                end_week: endWeek,
+                year: year,
+                place_id: Number(placeId),
+            });
+            
+            console.log('Report result:', reportResult);
+            setReportSuccess(true);
+            
+            // Auto-hide success message after 3 seconds
+            setTimeout(() => setReportSuccess(false), 3000);
+            
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Error al procesar el informe";
+            setError(errorMessage);
+        } finally {
+            setLoadingReport(false);
+        }
+    }, [windowSize, startWeek, endWeek, year, placeId, validateParams]);
 
     return (
         <div className="max-w-7xl mx-auto space-y-6">
@@ -194,71 +183,6 @@ export default function FlowReporterAnalysis() {
                         </div>
                     )}
                 </div>
-
-                {/* Analytics Stats Grid */}
-                {analyticsStats && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Caudal Promedio</span>
-                            </div>
-                            <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                {analyticsStats.avgFlowRate}
-                            </div>
-                        </div>
-
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
-                                <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Caudal Máximo</span>
-                            </div>
-                            <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                {analyticsStats.maxFlowRate}
-                            </div>
-                        </div>
-
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
-                                <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Pérdida Total</span>
-                            </div>
-                            <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                {analyticsStats.totalWaterLoss}
-                            </div>
-                        </div>
-
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
-                                <BarChart3 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Eficiencia</span>
-                            </div>
-                            <div className={`text-lg font-bold ${Number(analyticsStats.efficiency) > 80 ? 'text-green-600' : Number(analyticsStats.efficiency) > 60 ? 'text-yellow-600' : 'text-red-600'}`}>
-                                {analyticsStats.efficiency}%
-                            </div>
-                        </div>
-
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
-                                <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Anomalías</span>
-                            </div>
-                            <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                {analyticsStats.anomalies}
-                            </div>
-                        </div>
-
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
-                                <MapPin className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Datos</span>
-                            </div>
-                            <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                {analyticsStats.dataPoints}
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Error Display */}
@@ -266,6 +190,14 @@ export default function FlowReporterAnalysis() {
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg flex items-center gap-2" role="alert">
                     <AlertTriangle className="h-5 w-5 flex-shrink-0" />
                     <span>{error}</span>
+                </div>
+            )}
+
+            {/* Success Display */}
+            {reportSuccess && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg flex items-center gap-2" role="alert">
+                    <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                    <span>Informe procesado exitosamente</span>
                 </div>
             )}
 
@@ -284,153 +216,31 @@ export default function FlowReporterAnalysis() {
                 )}
             </div>
 
+
+
             {/* Parameters Form */}
-            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                            Configuración del Análisis
-                        </h3>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Configure los parámetros temporales y de ubicación para generar el análisis de FlowReporter
-                    </p>
-                </div>
+            <ParameterForm
+                places={places}
+                placeId={placeId}
+                year={year}
+                startWeek={startWeek}
+                endWeek={endWeek}
+                windowSize={windowSize}
+                loading={loading}
+                loadingReport={loadingReport}
+                onYearChange={setYear}
+                onPlaceChange={setPlaceId}
+                onStartWeekChange={setStartWeek}
+                onEndWeekChange={setEndWeek}
+                onWindowSizeChange={setWindowSize}
+                onAnalysisSubmit={handleAnalysis}   
+                onReportSubmit={handleReport}
+            />
+            {/* New Place Form */}
+            <NewPlaceForm />
+            {/* Force Scrape Form */}
+            <ForceScrapeForm places={places} />
 
-                <form
-                    className="p-6"
-                    onSubmit={e => {
-                        e.preventDefault();
-                        handleAnalysis();
-                    }}
-                >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                Lugar
-                            </label>
-                            <select
-                                value={placeId}
-                                onChange={handlePlaceChange}
-                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                                required
-                            >
-                                <option value="" disabled>
-                                    Seleccione un lugar
-                                </option>
-                                {places && places.length > 0 ? (
-                                    places.map((place: Place) => (
-                                        <option key={place.id} value={place.id}>
-                                            {place.name || `Lugar ${place.id}`}
-                                        </option>
-                                    ))
-                                ) : (
-                                    <option value="" disabled>
-                                        No hay lugares disponibles
-                                    </option>
-                                )}
-                            </select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
-                                Año
-                            </label>
-                            <input
-                                type="number"
-                                value={year}
-                                onChange={e => setYear(Number(e.target.value))}
-                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                                min={2000}
-                                max={2100}
-                                required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Tamaño de ventana (días)
-                            </label>
-                            <input
-                                type="number"
-                                value={windowSize}
-                                onChange={e => setWindowSize(Number(e.target.value))}
-                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                                min={1}
-                                max={365}
-                                required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Semana inicial
-                            </label>
-                            <input
-                                type="number"
-                                value={startWeek}
-                                onChange={e => {
-                                    const value = Number(e.target.value);
-                                    setStartWeek(value);
-                                    if (value > endWeek) setEndWeek(value);
-                                }}
-                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                                min={1}
-                                max={53}
-                                required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Semana final
-                            </label>
-                            <input
-                                type="number"
-                                value={endWeek}
-                                onChange={e => setEndWeek(Number(e.target.value))}
-                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                                min={startWeek}
-                                max={53}
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {places.length > 0 && (
-                                    <p>
-                                        Se analizarán {endWeek - startWeek + 1} semanas del año {year}
-                                        con ventana de {windowSize} días
-                                    </p>
-                                )}
-                            </div>
-                            <button
-                                type="submit"
-                                className={`px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-sm ${loading ? "cursor-not-allowed" : ""}`}
-                                disabled={loading || !placeId}
-                            >
-                                {loading ? (
-                                    <>
-                                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                                        Procesando análisis...
-                                    </>
-                                ) : (
-                                    <>
-                                        <BarChart3 className="h-4 w-4" />
-                                        Ejecutar Análisis FlowReporter
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
         </div>
     );
 } 

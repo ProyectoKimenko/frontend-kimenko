@@ -2,7 +2,7 @@
   "name": "kimenko-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Sistema profesional de análisis de caudal y gestión de datos energéticos - Kimenko",
+  "description": "Sistema profesional de análisis de caudal - Kimenko",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -13,6 +13,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.9",
     "echarts-for-react": "^3.0.2",
+    "jspdf": "^3.0.1",
     "lucide-react": "^0.511.0",
     "next": "15.3.2",
     "react": "^19.0.0",

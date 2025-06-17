@@ -22,3 +22,15 @@ export interface AnalysisResponse {
         year: number;
     };
 }
+
+export interface FetchReportParams {
+    window_size: number;
+    start_week: number;
+    end_week: number;
+    year: number;
+    place_id: number;
+}
+export interface ReportResponse {
+    pdf_file: Blob;
+    filename: string;
+}

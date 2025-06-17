@@ -1,11 +1,10 @@
 # Kimenko - Sistema de Análisis de Caudal y Datos
 
-Sistema profesional de análisis de caudal y gestión de datos energéticos desarrollado por Kimenko.
+Sistema profesional de análisis de caudal desarrollado por Kimenko.
 
 ## 🚀 Características
 
 - **Análisis de Caudal**: Herramientas avanzadas para análisis de flujo de agua y detección de pérdidas
-- **Análisis Xylem**: Procesamiento de archivos Excel con datos de consumo energético
 - **Gráficos Interactivos**: Visualización de datos con ECharts y análisis estadísticos
 - **Interfaz Profesional**: Diseño moderno con soporte para modo oscuro
 - **Responsive Design**: Compatible con dispositivos móviles y desktop

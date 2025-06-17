@@ -1,9 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { User } from '@supabase/supabase-js'
 
 // Cache user verification for a short time to avoid repeated calls
-const userCache = new Map<string, { user: any | null, timestamp: number }>()
-const CACHE_DURATION = 10000 // 10 seconds
+const userCache = new Map<string, { user: User | null, timestamp: number }>()
+const CACHE_DURATION = 5000 // 5 seconds (reduced for better logout handling)
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -30,12 +31,12 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+          cookiesToSet.forEach(({ name, value }) =>
+            supabaseResponse.cookies.set(name, value)
           )
         },
       },
@@ -50,6 +51,13 @@ export async function updateSession(request: NextRequest) {
   let user = null
   let error = null
 
+  // Check if user is coming from logout (no session token but had one before)
+  const hasSessionToken = request.cookies.has('sb-access-token')
+  if (!hasSessionToken && sessionToken === 'anonymous') {
+    // Clear cache for this anonymous user
+    userCache.delete('anonymous')
+  }
+
   // Use cache if available and fresh
   if (cached && (now - cached.timestamp) < CACHE_DURATION) {
     user = cached.user
@@ -58,10 +66,10 @@ export async function updateSession(request: NextRequest) {
     try {
       const authPromise = supabase.auth.getUser()
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Auth timeout')), 3000)
+        setTimeout(() => reject(new Error('Tiempo de espera de autenticación agotado')), 3000)
       )
 
-      const result = await Promise.race([authPromise, timeoutPromise]) as any
+      const result = await Promise.race([authPromise, timeoutPromise]) as { data: { user: User | null }, error: Error }
       user = result.data?.user || null
       error = result.error
 
@@ -80,9 +88,9 @@ export async function updateSession(request: NextRequest) {
       // Cache null user on timeout/error
       userCache.set(sessionToken, { user: null, timestamp: now })
 
-      // In development, log timeouts for debugging
+      // En desarrollo, registrar timeouts para depuración
       if (process.env.NODE_ENV === 'development') {
-        console.warn('Auth middleware timeout:', err)
+        console.warn('Timeout del middleware de autenticación:', err)
       }
     }
   }
@@ -90,7 +98,6 @@ export async function updateSession(request: NextRequest) {
   // Enhanced route protection
   const isAdminRoute = pathname.startsWith('/admin')
   const isLoginRoute = pathname === '/login'
-  const isRootRoute = pathname === '/'
 
   // Redirect authenticated users away from login page
   if (user && isLoginRoute) {
@@ -108,9 +115,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Log authentication errors for debugging (only in development)
+  // Registrar errores de autenticación para depuración (solo en desarrollo)
   if (error && process.env.NODE_ENV === 'development') {
-    console.warn('Supabase auth error in middleware:', error.message)
+    console.warn('Error de autenticación de Supabase en middleware:', error instanceof Error ? error.message : 'Unknown error')
   }
 
   // Add user info to headers for client-side optimization

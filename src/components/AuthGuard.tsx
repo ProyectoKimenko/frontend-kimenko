@@ -16,7 +16,7 @@ export default function AuthGuard({
     redirectTo = '/login',
     fallback
 }: AuthGuardProps) {
-    const { user, loading, isAuthenticated } = useAuth();
+    const { loading, isAuthenticated } = useAuth();
     const router = useRouter();
 
     useEffect(() => {

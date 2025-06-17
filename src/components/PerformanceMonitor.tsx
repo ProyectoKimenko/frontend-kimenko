@@ -40,12 +40,12 @@ export default function PerformanceMonitor() {
 
     return (
         <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-3 rounded-lg max-w-xs">
-            <div className="font-semibold mb-2">🚀 Performance Monitor</div>
+            <div className="font-semibold mb-2">🚀 Monitor de Rendimiento</div>
             <div className="space-y-1">
-                <div>Auth: {metrics.authLoadTime}ms</div>
-                <div>Page: {Math.round(metrics.pageLoadTime)}ms</div>
-                <div>Status: {loading ? '⏳ Loading' : isAuthenticated ? '✅ Authenticated' : '❌ Not authenticated'}</div>
-                <div>Calls: {metrics.totalAuthCalls}</div>
+                <div>Autenticación: {metrics.authLoadTime}ms</div>
+                <div>Página: {Math.round(metrics.pageLoadTime)}ms</div>
+                <div>Estado: {loading ? '⏳ Cargando' : isAuthenticated ? '✅ Autenticado' : '❌ No autenticado'}</div>
+                <div>Llamadas: {metrics.totalAuthCalls}</div>
             </div>
         </div>
     );

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { User } from '@supabase/supabase-js'
+import type { Session, User } from '@supabase/supabase-js'
 
 interface AuthState {
     user: User | null
@@ -14,7 +14,7 @@ interface AuthState {
 // Global state to prevent multiple simultaneous auth checks
 let globalAuthState: AuthState | null = null
 let authInitPromise: Promise<AuthState> | null = null
-let listeners: Set<(state: AuthState) => void> = new Set()
+const listeners: Set<(state: AuthState) => void> = new Set()
 
 export function useAuth() {
     const router = useRouter()
@@ -65,13 +65,13 @@ export function useAuth() {
                     // Get initial session with timeout
                     const sessionPromise = supabase.auth.getSession()
                     const timeoutPromise = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Auth timeout')), 5000)
+                        setTimeout(() => reject(new Error('Tiempo de espera de autenticación agotado')), 5000)
                     )
 
                     const { data: { session }, error } = await Promise.race([
                         sessionPromise,
                         timeoutPromise
-                    ]) as any
+                    ]) as { data: { session: Session | null }, error: Error }
 
                     if (error) {
                         const errorState = { user: null, loading: false, error: error.message }
@@ -119,7 +119,7 @@ export function useAuth() {
                     const errorState = {
                         user: null,
                         loading: false,
-                        error: error instanceof Error ? error.message : 'Unknown error'
+                        error: error instanceof Error ? error.message : 'Error desconocido'
                     }
                     broadcastStateChange(errorState)
                     return errorState
@@ -161,7 +161,7 @@ export function useAuth() {
 
             return { success: true, error: null }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Login failed'
+            const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión'
             const errorState = { ...globalAuthState!, loading: false, error: errorMessage }
             broadcastStateChange(errorState)
             return { success: false, error: errorMessage }
@@ -186,11 +186,23 @@ export function useAuth() {
             const loggedOutState = { user: null, loading: false, error: null }
             broadcastStateChange(loggedOutState)
 
-            // Navigate after state update
-            setTimeout(() => router.push('/login'), 100)
+            // Clear any cached authentication state
+            globalAuthState = loggedOutState
+            authInitPromise = null
+
+            // Force immediate redirect without timeout to prevent race conditions
+            router.push('/login')
+            
+            // Also trigger a page reload as fallback to clear any remaining state
+            setTimeout(() => {
+                if (window.location.pathname.startsWith('/admin')) {
+                    window.location.href = '/login'
+                }
+            }, 500)
+
             return { success: true, error: null }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Logout failed'
+            const errorMessage = error instanceof Error ? error.message : 'Error al cerrar sesión'
             const errorState = { ...globalAuthState!, loading: false, error: errorMessage }
             broadcastStateChange(errorState)
             return { success: false, error: errorMessage }
