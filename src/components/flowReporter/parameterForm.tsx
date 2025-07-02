@@ -29,7 +29,7 @@ function getWeekDates(year: number, week: number) {
     const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
     
     const weekStart = new Date(firstMonday);
-    weekStart.setDate(firstMonday.getDate() + (week - 1) * 7);
+    weekStart.setDate(firstMonday.getDate() + (week - 2) * 7);
     
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
@@ -121,12 +121,8 @@ export default function ParameterForm({
                 </p>
             </div>
 
-            <form
+            <div
                 className="p-6"
-                onSubmit={e => {
-                    e.preventDefault();
-                    onAnalysisSubmit();
-                }}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Selector de Lugar */}
@@ -278,8 +274,9 @@ export default function ParameterForm({
                         </div>
                         <div className="flex gap-3">
                             <button
-                                type="submit"
+                                type="button"
                                 className={`px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-sm ${loading ? "cursor-not-allowed" : ""}`}
+                                onClick={onAnalysisSubmit}
                                 disabled={loading || loadingReport || !placeId}
                             >
                                 {loading ? (
@@ -315,7 +312,7 @@ export default function ParameterForm({
                         </div>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     );
 }
