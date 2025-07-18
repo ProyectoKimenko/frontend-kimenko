@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useCallback } from 'react'
 import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import { FileText, Loader } from 'lucide-react'
 import type { PDFReportData, PDFReportOptions } from '../../types/components/reports/typesPDFReport'
 
@@ -20,328 +21,212 @@ export default function PDFReportGenerator({
     const [isGenerating, setIsGenerating] = useState(false)
 
     const generateCleanReport = useCallback(async () => {
-        setIsGenerating(true)
+        setIsGenerating(true);
 
         try {
-            console.log('🔄 Preparing PDF data...')
-            const data = await preparePDFData()
-            
-            console.log('📊 PDF data prepared')
-            console.log('🖼️ Chart image available:', !!data.chartImage)
+            const data = await preparePDFData();
 
-            const pdf = new jsPDF('p', 'mm', 'a4')
-            const pageWidth = pdf.internal.pageSize.getWidth()
-            const pageHeight = pdf.internal.pageSize.getHeight()
-            const margin = 25
-            const contentWidth = pageWidth - (margin * 2)
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 15;
+            const contentWidth = pageWidth - (margin * 2);
+            const lineHeight = 5;
 
-            // Función para calcular dimensiones de imagen respetando aspect ratio
-            const calculateImageDimensions = (originalRatio: number = 16/9) => {
-                const maxWidth = contentWidth
-                const maxHeight = 120 // Altura máxima disponible
-                
-                // Calcular dimensiones respetando el aspect ratio
-                let imageWidth = maxWidth
-                let imageHeight = imageWidth / originalRatio
-                
-                // Si la altura excede el máximo, ajustar por altura
-                if (imageHeight > maxHeight) {
-                    imageHeight = maxHeight
-                    imageWidth = imageHeight * originalRatio
-                }
-                
-                // Asegurar que no exceda el ancho disponible
-                if (imageWidth > maxWidth) {
-                    imageWidth = maxWidth
-                    imageHeight = imageWidth / originalRatio
-                }
-                
-                return {
-                    width: imageWidth,
-                    height: imageHeight,
-                    x: margin + (contentWidth - imageWidth) / 2 // Centrar horizontalmente
-                }
-            }
-
-            // ======================
-            // FUNCIONES AUXILIARES
-            // ======================
-
-            const addCleanHeader = (title: string, subtitle?: string) => {
-                pdf.setFillColor(30, 64, 175)
-                pdf.rect(0, 0, pageWidth, 8, 'F')
-
-                pdf.setTextColor(55, 65, 81)
-                pdf.setFontSize(24)
-                pdf.setFont('helvetica', 'bold')
-                pdf.text(title, margin, 35)
-
-                if (subtitle) {
-                    pdf.setFontSize(14)
-                    pdf.setFont('helvetica', 'normal')
-                    pdf.setTextColor(107, 114, 128)
-                    pdf.text(subtitle, margin, 45)
-                }
-
-                pdf.setDrawColor(229, 231, 235)
-                pdf.setLineWidth(0.5)
-                pdf.line(margin, 55, pageWidth - margin, 55)
-
-                return 70
-            }
-
-            const addSection = (title: string, yPos: number) => {
-                pdf.setFontSize(16)
-                pdf.setFont('helvetica', 'bold')
-                pdf.setTextColor(30, 64, 175)
-                pdf.text(title, margin, yPos)
-
-                pdf.setDrawColor(30, 64, 175)
-                pdf.setLineWidth(1)
-                pdf.line(margin, yPos + 3, margin + 80, yPos + 3)
-
-                return yPos + 15
-            }
-
-            const addKeyMetrics = (metrics: PDFReportData['keyMetrics'], yPos: number) => {
-                const metricsPerRow = 2
-                const cardWidth = (contentWidth - 10) / metricsPerRow
-                const cardHeight = 40
-
-                metrics.forEach((metric, index) => {
-                    const col = index % metricsPerRow
-                    const row = Math.floor(index / metricsPerRow)
-                    const x = margin + (col * (cardWidth + 10))
-                    const y = yPos + (row * (cardHeight + 15))
-
-                    // Fondo de la tarjeta
-                    pdf.setFillColor(255, 255, 255)
-                    pdf.rect(x, y, cardWidth, cardHeight, 'F')
-
-                    // Borde sutil
-                    pdf.setDrawColor(229, 231, 235)
-                    pdf.setLineWidth(0.5)
-                    pdf.rect(x, y, cardWidth, cardHeight, 'S')
-
-                    // Acento de color
-                    pdf.setFillColor(metric.color[0], metric.color[1], metric.color[2])
-                    pdf.rect(x, y, cardWidth, 3, 'F')
-
-                    // Contenido
-                    pdf.setFontSize(10)
-                    pdf.setFont('helvetica', 'normal')
-                    pdf.setTextColor(107, 114, 128)
-                    pdf.text(metric.title, x + 8, y + 15)
-
-                    pdf.setFontSize(20)
-                    pdf.setFont('helvetica', 'bold')
-                    pdf.setTextColor(55, 65, 81)
-                    const valueText = metric.value.replace(/[↗↘→]/g, '').trim()
-                    pdf.text(valueText, x + 8, y + 28)
-
-                    pdf.setFontSize(9)
-                    pdf.setFont('helvetica', 'normal')
-                    pdf.setTextColor(107, 114, 128)
-                    pdf.text(metric.subtitle, x + 8, y + 36)
-                })
-
-                const totalRows = Math.ceil(metrics.length / metricsPerRow)
-                return yPos + (totalRows * (cardHeight + 15))
-            }
-
-            // ================================
-            // GENERACIÓN DEL CONTENIDO
-            // ================================
-
-            let yPosition = addCleanHeader(
-                data.title || 'Informe de Análisis de agua',
-                data.subtitle || 'Sistema Xylem'
-            )
-
-            // Información del documento
-            pdf.setFontSize(9)
-            pdf.setFont('helvetica', 'normal')
-            pdf.setTextColor(107, 114, 128)
-
-            const currentDate = new Date().toLocaleDateString('es-ES')
-            pdf.text(`Generado: ${currentDate}`, margin, yPosition)
-            
-            if (data.metadata?.['Período analizado']) {
-                pdf.text(`Período: ${data.metadata['Período analizado']}`, margin + 60, yPosition)
-            }
-            
-            if (data.metadata?.['Total de registros']) {
-                pdf.text(`Registros: ${data.metadata['Total de registros']}`, margin + 120, yPosition)
-            }
-
-            yPosition += 20
-
-            // Métricas principales
-            yPosition = addSection('Métricas Principales', yPosition)
-            yPosition = addKeyMetrics(data.keyMetrics.slice(0, 4), yPosition)
-            yPosition += 15
-
-            // GRÁFICO - LÓGICA MEJORADA DE DIMENSIONAMIENTO
-            if (data.chartImage) {
-                console.log('📈 Adding chart to PDF...')
-                
-                // Verificar que hay suficiente espacio
-                const spaceNeeded = 130 // Espacio necesario para el gráfico + margen
-                if (yPosition + spaceNeeded > pageHeight - 30) {
-                    console.log('📄 Adding new page for chart')
-                    pdf.addPage()
-                    yPosition = addCleanHeader('Visualización de Datos')
-                } else {
-                    yPosition = addSection('Gráfico de Consumo', yPosition)
-                }
-
-                try {
-                    // Calcular dimensiones óptimas
-                    const imageDimensions = calculateImageDimensions(16/9) // Aspect ratio típico de charts
-                    
-                    console.log(`📐 Image dimensions: ${imageDimensions.width}x${imageDimensions.height}`)
-                    console.log(`📍 Image position: x=${imageDimensions.x}, y=${yPosition}`)
-
-                    // Marco decorativo para la imagen
-                    pdf.setDrawColor(30, 64, 175) // Color primario
-                    pdf.setLineWidth(1)
-                    pdf.rect(
-                        imageDimensions.x - 3, 
-                        yPosition - 3, 
-                        imageDimensions.width + 6, 
-                        imageDimensions.height + 6, 
-                        'S'
-                    )
-
-                    // Fondo blanco para la imagen
-                    pdf.setFillColor(255, 255, 255)
-                    pdf.rect(
-                        imageDimensions.x - 2, 
-                        yPosition - 2, 
-                        imageDimensions.width + 4, 
-                        imageDimensions.height + 4, 
-                        'F'
-                    )
-
-                    // Agregar la imagen del gráfico
-                    pdf.addImage(
-                        data.chartImage, 
-                        'PNG', 
-                        imageDimensions.x, 
-                        yPosition, 
-                        imageDimensions.width, 
-                        imageDimensions.height
-                    )
-
-                    console.log('✅ Chart image added successfully to PDF')
-                    yPosition += imageDimensions.height + 20
-
-                } catch (error) {
-                    console.error('❌ Error adding chart image to PDF:', error)
-                    
-                    // Fallback: mostrar un mensaje de error elegante
-                    const fallbackHeight = 60
-                    pdf.setDrawColor(220, 38, 38)
-                    pdf.setLineWidth(1)
-                    pdf.rect(margin, yPosition, contentWidth, fallbackHeight, 'S')
-                    
-                    pdf.setFontSize(12)
-                    pdf.setTextColor(220, 38, 38)
-                    pdf.text('⚠️ Gráfico no disponible', margin + contentWidth/2 - 30, yPosition + 20)
-                    
-                    pdf.setFontSize(10)
-                    pdf.setTextColor(107, 114, 128)
-                    pdf.text('Error al cargar la visualización de datos', margin + contentWidth/2 - 40, yPosition + 35)
-                    
-                    yPosition += fallbackHeight + 15
-                }
-            } else {
-                console.warn('⚠️ No chart image provided for PDF')
-                
-                // Mensaje informativo cuando no hay gráfico
-                yPosition = addSection('Gráfico de Consumo', yPosition)
-                pdf.setFontSize(10)
-                pdf.setTextColor(107, 114, 128)
-                pdf.text('Gráfico no disponible en este reporte', margin + contentWidth/2 - 40, yPosition + 20)
-                yPosition += 40
-            }
-
-            // Resumen estadístico (si hay espacio)
-            if (yPosition < pageHeight - 100) {
-                yPosition = addSection('Resumen Estadístico', yPosition)
-                
-                // Tabla simplificada
-                const rowHeight = 12
-                const headers = data.statisticalSummary.headers
-                const rows = data.statisticalSummary.rows.slice(0, 4) // Solo las primeras 4
-
-                // Header de tabla
-                pdf.setFillColor(239, 246, 255)
-                pdf.rect(margin, yPosition, contentWidth, rowHeight, 'F')
-
-                pdf.setFontSize(10)
-                pdf.setFont('helvetica', 'bold')
-                pdf.setTextColor(55, 65, 81)
-
-                const colWidth = contentWidth / headers.length
-                headers.forEach((header, index) => {
-                    pdf.text(header, margin + (index * colWidth) + 5, yPosition + 8)
-                })
-
-                yPosition += rowHeight
-
-                // Filas de datos
-                pdf.setFont('helvetica', 'normal')
-                pdf.setFontSize(9)
-
-                rows.forEach((row, rowIndex) => {
-                    if (rowIndex % 2 === 0) {
-                        pdf.setFillColor(250, 250, 250)
-                        pdf.rect(margin, yPosition, contentWidth, rowHeight, 'F')
+            // Helper function to add wrapped text and handle page overflow
+            const addWrappedText = (text: string, x: number, y: number, maxWidth: number): number => {
+                const lines = pdf.splitTextToSize(text, maxWidth);
+                lines.forEach((line: string) => {
+                    if (y + lineHeight > pageHeight - margin - 10) { // Reserve space for footer
+                        pdf.addPage();
+                        y = margin;
                     }
+                    pdf.text(line, x, y);
+                    y += lineHeight;
+                });
+                return y;
+            };
 
-                    pdf.setTextColor(55, 65, 81)
-                    row.forEach((cell, cellIndex) => {
-                        const truncated = cell.length > 20 ? cell.substring(0, 20) + '...' : cell
-                        pdf.text(truncated, margin + (cellIndex * colWidth) + 5, yPosition + 8)
-                    })
+            // Helper function for metadata
+            const addMetadata = (metadata: Record<string, string> | undefined, startY: number): number => {
+                let y = startY;
+                pdf.setFont("helvetica", "bold");
+                y = addWrappedText("Metadata", margin, y, contentWidth);
+                pdf.setFont("helvetica", "normal");
+                if (metadata) {
+                    Object.entries(metadata).forEach(([key, value]) => {
+                        y = addWrappedText(`${key}: ${value}`, margin + 5, y, contentWidth - 5);
+                    });
+                }
+                return y + lineHeight; // Extra spacing after section
+            };
 
-                    yPosition += rowHeight
-                })
+            // Helper function for insights
+            const addInsights = (insights: string[] | undefined, startY: number): number => {
+                let y = startY;
+                pdf.setFont("helvetica", "bold");
+                y = addWrappedText("Insights", margin, y, contentWidth);
+                pdf.setFont("helvetica", "normal");
+                if (insights && insights.length > 0) {
+                    insights.forEach((insight) => {
+                        y = addWrappedText(`• ${insight}`, margin + 5, y, contentWidth - 5);
+                    });
+                }
+                return y + lineHeight; // Extra spacing after section
+            };
+
+            // Set professional font
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(10);
+
+            // Header on first page
+            pdf.setFontSize(16);
+            pdf.setFont("helvetica", "bold");
+            pdf.text(data.title ?? '', pageWidth / 2, 15, { align: "center", maxWidth: contentWidth });
+            pdf.setFontSize(12);
+            pdf.setFont("helvetica", "italic");
+            pdf.text(data.subtitle ?? '', pageWidth / 2, 22, { align: "center", maxWidth: contentWidth });
+
+            let yPosition = 30;
+
+            // Metadata
+            yPosition = addMetadata(data.metadata, yPosition);
+
+            // Key Metrics
+            pdf.setFont("helvetica", "bold");
+            yPosition = addWrappedText("Métricas Clave", margin, yPosition, contentWidth);
+            pdf.setFont("helvetica", "normal");
+            if (data.keyMetrics && data.keyMetrics.length > 0) {
+                const metricsPerRow = 3;
+                const metricWidth = contentWidth / metricsPerRow;
+                const metricHeight = 20;
+                const rowsNeeded = Math.ceil(data.keyMetrics.length / metricsPerRow);
+
+                data.keyMetrics.forEach((metric, index) => {
+                    const row = Math.floor(index / metricsPerRow);
+                    const col = index % metricsPerRow;
+                    const x = margin + (col * metricWidth);
+                    const y = yPosition + (row * (metricHeight + 5));
+
+                    // Set background color
+                    if (Array.isArray(metric.color) && metric.color.length === 3) {
+                        pdf.setFillColor(
+                            Number(metric.color[0]),
+                            Number(metric.color[1]),
+                            Number(metric.color[2])
+                        );
+                    } else {
+                        pdf.setFillColor(0, 102, 204); // Default color
+                    }
+                    pdf.rect(x, y, metricWidth - 5, metricHeight, "F");
+
+                    // Text inside
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFontSize(9);
+                    pdf.text(metric.title ?? '', x + 5, y + 5);
+                    pdf.setFontSize(12);
+                    pdf.text(metric.value ?? '', x + 5, y + 12);
+                    pdf.setFontSize(8);
+                    pdf.text(metric.subtitle ?? '', x + 5, y + 18);
+                    pdf.setTextColor(0, 0, 0);
+                });
+
+                yPosition += rowsNeeded * (metricHeight + 5) + lineHeight;
+            } else {
+                yPosition += lineHeight;
             }
 
-            // Footer profesional
-            const addCleanFooter = () => {
-                const footerY = pageHeight - 20
-                
-                pdf.setDrawColor(229, 231, 235)
-                pdf.setLineWidth(0.5)
-                pdf.line(margin, footerY, pageWidth - margin, footerY)
-
-                pdf.setFontSize(8)
-                pdf.setFont('helvetica', 'normal')
-                pdf.setTextColor(107, 114, 128)
-                
-                pdf.text('Sistema de Análisis de agua sensores Xylem', margin, footerY + 8)
-                pdf.text(currentDate, pageWidth - margin - 25, footerY + 8)
-                pdf.text('Página 1', pageWidth - margin - 15, footerY + 12)
+            // Statistical Summary
+            pdf.setFont("helvetica", "bold");
+            yPosition = addWrappedText("Resumen Estadístico", margin, yPosition, contentWidth);
+            if (data.statisticalSummary) {
+                autoTable(pdf, {
+                    startY: yPosition,
+                    head: [data.statisticalSummary.headers ?? []],
+                    body: data.statisticalSummary.rows ?? [],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [0, 102, 204], textColor: 255 },
+                    alternateRowStyles: { fillColor: [240, 240, 240] },
+                });
+                yPosition = (pdf as any).lastAutoTable.finalY + lineHeight;
+            } else {
+                yPosition += lineHeight;
             }
 
-            addCleanFooter()
+            // Insights
+            yPosition = addInsights(data.insights, yPosition);
 
-            // Guardar PDF
-            const fileName = options.filename || `xylem-report-${new Date().toISOString().slice(0, 10)}.pdf`
-            pdf.save(fileName)
+            // Projections
+            pdf.setFont("helvetica", "bold");
+            yPosition = addWrappedText("Proyecciones", margin, yPosition, contentWidth);
+            if (data.projections) {
+                autoTable(pdf, {
+                    startY: yPosition,
+                    head: [data.projections.headers ?? []],
+                    body: data.projections.rows ?? [],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [0, 102, 204], textColor: 255 },
+                    alternateRowStyles: { fillColor: [240, 240, 240] },
+                });
+                yPosition = (pdf as any).lastAutoTable.finalY + lineHeight;
+            } else {
+                yPosition += lineHeight;
+            }
 
-            console.log('✅ PDF generated successfully:', fileName)
+            // Add Chart if available
+            if (data.chartImage) {
+                const chartHeaderHeight = 10 + lineHeight;
+                const originalRatio = 16 / 9; // Assumed aspect ratio
+                const maxWidth = contentWidth;
+                const maxHeight = pageHeight - margin - 20 - chartHeaderHeight; // Reserve for header and footer
+                let imageWidth = maxWidth;
+                let imageHeight = imageWidth / originalRatio;
+
+                if (imageHeight > maxHeight) {
+                    imageHeight = maxHeight;
+                    imageWidth = imageHeight * originalRatio;
+                }
+
+                // Check if fits on current page
+                const requiredHeight = chartHeaderHeight + imageHeight + 10;
+                if (yPosition + requiredHeight > pageHeight - margin - 10) {
+                    pdf.addPage();
+                    yPosition = margin;
+                }
+
+                // Chart header
+                pdf.setFontSize(14);
+                pdf.setFont("helvetica", "bold");
+                pdf.text("Gráfico de Análisis", pageWidth / 2, yPosition, { align: "center" });
+                yPosition += chartHeaderHeight;
+
+                // Add image centered
+                const x = margin + (contentWidth - imageWidth) / 2;
+                pdf.addImage(data.chartImage, "PNG", x, yPosition, imageWidth, imageHeight);
+            }
+
+            // Footer on all pages
+            const pageCount = pdf.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(8);
+                pdf.setTextColor(100);
+                pdf.text(`Página ${i} de ${pageCount}`, pageWidth - margin - 20, pageHeight - 10, { align: "right" });
+                pdf.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, margin, pageHeight - 10);
+                pdf.text("Kimenko - Análisis Profesional de Consumo", pageWidth / 2, pageHeight - 10, { align: "center" });
+            }
+
+            // Save PDF
+            pdf.save(`reporte-analisis-${new Date().toISOString().slice(0, 10)}.pdf`);
 
         } catch (error) {
-            console.error('❌ Error generating PDF report:', error)
-            alert('Error al generar el reporte. Por favor, inténtelo de nuevo.')
+            console.error("Error generating PDF:", error);
         } finally {
-            setIsGenerating(false)
+            setIsGenerating(false);
         }
-    }, [preparePDFData, options])
+    }, [preparePDFData]);
 
     return (
         <button
@@ -362,4 +247,4 @@ export default function PDFReportGenerator({
             )}
         </button>
     )
-} 
+}

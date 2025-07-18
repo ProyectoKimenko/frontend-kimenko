@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
 import ChartXylem from "@/components/analysis/chartXylem";
 import {
@@ -11,6 +11,8 @@ import {
     CheckCircle,
     Trash2,
     Info,
+    Calendar,
+    Clock,
 } from "lucide-react";
 
 interface XylemData {
@@ -35,9 +37,20 @@ type CellValue = string | number | Date | boolean;
 
 export default function XylemPage() {
     const [data, setData] = useState<ProcessedData | null>(null);
+    const [filteredData, setFilteredData] = useState<ProcessedData | null>(null);
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
+    // Remove enableNightLoss, add lossMode
+    const [lossMode, setLossMode] = useState<'rolling' | 'night'>('rolling');
+    const [startHour, setStartHour] = useState<number>(22);
+    const [endHour, setEndHour] = useState<number>(6);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [dragActive, setDragActive] = useState(false);
+
+    // New: minDate and maxDate for clamping/filtering
+    const [minDate, setMinDate] = useState<string>("");
+    const [maxDate, setMaxDate] = useState<string>("");
 
     const processExcelData = useCallback((workbook: XLSX.WorkBook): ProcessedData | null => {
         try {
@@ -147,6 +160,31 @@ export default function XylemPage() {
         }
     }, []);
 
+    // Updated: clamp filters to minDate/maxDate
+    const applyFilters = useCallback(() => {
+        if (!data) return;
+
+        let filteredSeries = data.time_series;
+
+        // Clamp start and end to minDate/maxDate
+        const minDateMs = minDate ? new Date(minDate).getTime() : -Infinity;
+        const maxDateMs = maxDate ? new Date(maxDate).getTime() + 86399999 : Infinity;
+
+        const start = startDate ? Math.max(minDateMs, new Date(startDate).getTime()) : minDateMs;
+        const end = endDate ? Math.min(maxDateMs, new Date(endDate).getTime() + 86399999) : maxDateMs;
+
+        filteredSeries = filteredSeries.filter(item => {
+            const ts = parseInt(item.timestamp);
+            return ts >= start && ts <= end;
+        });
+
+        setFilteredData({
+            ...data,
+            time_series: filteredSeries
+        });
+    }, [data, startDate, endDate, minDate, maxDate]);
+
+    // Updated: set minDate/maxDate and default start/end on file upload
     const handleFileUpload = useCallback(async (file: File) => {
         if (!file) return;
 
@@ -179,11 +217,20 @@ export default function XylemPage() {
             if (processedData) {
                 processedData.metadata!.filename = file.name;
                 setData(processedData);
+                setFilteredData(processedData);
+                setStartDate(processedData.metadata!.dateRange.start);
+                setEndDate(processedData.metadata!.dateRange.end);
+                setMinDate(processedData.metadata!.dateRange.start);
+                setMaxDate(processedData.metadata!.dateRange.end);
+                setLossMode('rolling'); // Reset to 'rolling' on upload
+                setStartHour(22);
+                setEndHour(6);
             }
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : "Error al procesar el archivo Excel";
             setError(errorMessage);
             setData(null);
+            setFilteredData(null);
         } finally {
             setLoading(false);
         }
@@ -229,8 +276,20 @@ export default function XylemPage() {
 
     const clearData = useCallback(() => {
         setData(null);
+        setFilteredData(null);
         setError(null);
+        setStartDate("");
+        setEndDate("");
+        setMinDate("");
+        setMaxDate("");
+        setLossMode('rolling');
+        setStartHour(22);
+        setEndHour(6);
     }, []);
+
+    useEffect(() => {
+        applyFilters();
+    }, [startDate, endDate, applyFilters]);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -363,11 +422,100 @@ export default function XylemPage() {
                     </div>
                 )}
 
-                {/* Chart Display */}
+                {/* Filtros de Análisis */}
                 {data && (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border mb-6 p-4">
+                        <h3 className="text-lg font-semibold mb-4">Filtros de Análisis</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="flex items-center gap-2 mb-2 text-sm font-medium">
+                                    <Calendar className="h-4 w-4" />
+                                    Fecha Inicio
+                                </label>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    min={minDate}
+                                    max={maxDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 mb-2 text-sm font-medium">
+                                    <Calendar className="h-4 w-4" />
+                                    Fecha Fin
+                                </label>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    min={minDate}
+                                    max={maxDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                />
+                            </div>
+                            <div>
+                                <label className="block mb-2 text-sm font-medium">Método de Cálculo de Pérdida</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            checked={lossMode === 'rolling'}
+                                            onChange={() => setLossMode('rolling')}
+                                            className="form-radio"
+                                        />
+                                        <span>Rolling Window</span>
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            checked={lossMode === 'night'}
+                                            onChange={() => setLossMode('night')}
+                                            className="form-radio"
+                                        />
+                                        <span>Modo Nocturno</span>
+                                    </label>
+                                </div>
+                                {lossMode === 'night' && (
+                                    <div className="flex gap-2 mt-2">
+                                        <div>
+                                            <label className="text-sm">Hora Inicio</label>
+                                            <input
+                                                type="number"
+                                                min={0} max={23}
+                                                value={startHour}
+                                                onChange={(e) => setStartHour(Number(e.target.value))}
+                                                className="w-full p-2 border rounded"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm">Hora Fin</label>
+                                            <input
+                                                type="number"
+                                                min={0} max={23}
+                                                value={endHour}
+                                                onChange={(e) => setEndHour(Number(e.target.value))}
+                                                className="w-full p-2 border rounded"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Chart Display */}
+                {filteredData && (
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
                         <div className="p-6">
-                            <ChartXylem data={data} />
+                            <ChartXylem
+                                data={filteredData}
+                                lossMode={lossMode}
+                                startHour={startHour}
+                                endHour={endHour}
+                            />
                         </div>
                     </div>
                 )}
