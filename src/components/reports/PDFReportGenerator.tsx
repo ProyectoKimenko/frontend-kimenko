@@ -14,7 +14,6 @@ interface PDFReportGeneratorProps {
 
 export default function PDFReportGenerator({
     preparePDFData,
-    options = {},
     className = '',
     buttonText = 'Generar Reporte PDF'
 }: PDFReportGeneratorProps) {
@@ -149,7 +148,9 @@ export default function PDFReportGenerator({
                     headStyles: { fillColor: [0, 102, 204], textColor: 255 },
                     alternateRowStyles: { fillColor: [240, 240, 240] },
                 });
-                yPosition = (pdf as any).lastAutoTable.finalY + lineHeight;
+                // Avoid using 'any' by declaring a type for pdf with lastAutoTable property
+                type PDFWithAutoTable = typeof pdf & { lastAutoTable: { finalY: number } };
+                yPosition = (pdf as PDFWithAutoTable).lastAutoTable.finalY + lineHeight;
             } else {
                 yPosition += lineHeight;
             }
@@ -170,7 +171,9 @@ export default function PDFReportGenerator({
                     headStyles: { fillColor: [0, 102, 204], textColor: 255 },
                     alternateRowStyles: { fillColor: [240, 240, 240] },
                 });
-                yPosition = (pdf as any).lastAutoTable.finalY + lineHeight;
+                // Avoid using 'any' by declaring a type for pdf with lastAutoTable property
+                type PDFWithAutoTable = typeof pdf & { lastAutoTable: { finalY: number } };
+                yPosition = (pdf as PDFWithAutoTable).lastAutoTable.finalY + lineHeight;
             } else {
                 yPosition += lineHeight;
             }

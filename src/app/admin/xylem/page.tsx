@@ -12,7 +12,6 @@ import {
     Trash2,
     Info,
     Calendar,
-    Clock,
 } from "lucide-react";
 
 interface XylemData {
