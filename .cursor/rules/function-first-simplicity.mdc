@@ -1,0 +1,247 @@
+---
+alwaysApply: true
+description: "Core development philosophy: Function first, keep it simple, minimize code"
+---
+
+# 🎯 FUNCTION FIRST - SIMPLICITY RULE
+
+## 🚨 HIGHEST PRIORITY: This rule overrides all other considerations
+
+### Core Principles
+
+1. **FUNCTION ALWAYS COMES FIRST** - If it works, ship it
+2. **MINIMAL CODE** - Write the least amount of code that solves the problem
+3. **SIMPLE SOLUTIONS** - Choose the simplest approach that works
+4. **NO OVER-ENGINEERING** - Avoid complex patterns unless absolutely necessary
+
+## Code Simplification Guidelines
+
+### ✅ SIMPLE - DO THIS
+```typescript
+// Simple, direct function
+function calculateFlowRate(volume: number, time: number): number {
+  return volume / time
+}
+
+// Simple component
+function FlowDisplay({ rate }: { rate: number }) {
+  return <div>Flow: {rate} L/min</div>
+}
+
+// Simple state management
+const [data, setData] = useState<FlowData[]>([])
+const [loading, setLoading] = useState(false)
+```
+
+### ❌ COMPLEX - AVOID THIS
+```typescript
+// Over-engineered with unnecessary abstractions
+class FlowRateCalculatorService implements IFlowCalculator {
+  private strategy: ICalculationStrategy
+  
+  constructor(strategy: ICalculationStrategy) {
+    this.strategy = strategy
+  }
+  
+  calculate(params: FlowCalculationParams): FlowCalculationResult {
+    return this.strategy.execute(params)
+  }
+}
+
+// Over-engineered component with unnecessary complexity
+const FlowDisplay = memo(forwardRef<HTMLDivElement, FlowDisplayProps>(
+  ({ rate, ...props }, ref) => {
+    const memoizedRate = useMemo(() => formatRate(rate), [rate])
+    return <div ref={ref} {...props}>Flow: {memoizedRate}</div>
+  }
+))
+```
+
+## Simplification Strategies
+
+### 1. Inline Small Functions
+```typescript
+// ✅ SIMPLE - Inline if it's used once
+function Dashboard() {
+  const data = flowData.map(item => ({ ...item, rate: item.volume / item.time }))
+  return <div>{/* render data */}</div>
+}
+
+// ❌ COMPLEX - Unnecessary extraction
+function Dashboard() {
+  const data = useMemo(() => calculateRates(flowData), [flowData])
+  return <div>{/* render data */}</div>
+}
+
+function calculateRates(data: FlowData[]) {
+  return data.map(item => ({ ...item, rate: item.volume / item.time }))
+}
+```
+
+### 2. Avoid Unnecessary Abstractions
+```typescript
+// ✅ SIMPLE - Direct API call
+async function saveFlowData(data: FlowData) {
+  const response = await fetch('/api/flow', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  return response.json()
+}
+
+// ❌ COMPLEX - Unnecessary abstraction layers
+class ApiService {
+  private httpClient: HttpClient
+  
+  async saveFlowData(data: FlowData): Promise<SaveResponse> {
+    return this.httpClient.post<SaveResponse>('/api/flow', data)
+  }
+}
+```
+
+### 3. Simple State Management
+```typescript
+// ✅ SIMPLE - Basic useState for most cases
+function FlowAnalysis() {
+  const [data, setData] = useState<FlowData[]>([])
+  const [error, setError] = useState('')
+  
+  // Direct state updates
+  const loadData = async () => {
+    try {
+      const result = await fetchFlowData()
+      setData(result)
+    } catch (err) {
+      setError('Failed to load')
+    }
+  }
+}
+
+// ❌ COMPLEX - Unnecessary reducer for simple state
+function FlowAnalysis() {
+  const [state, dispatch] = useReducer(flowDataReducer, initialState)
+  
+  const loadData = async () => {
+    dispatch({ type: 'LOADING_START' })
+    try {
+      const result = await fetchFlowData()
+      dispatch({ type: 'LOADING_SUCCESS', payload: result })
+    } catch (err) {
+      dispatch({ type: 'LOADING_ERROR', payload: err.message })
+    }
+  }
+}
+```
+
+## Decision Framework
+
+### Before Adding ANY Code, Ask:
+1. **Does this solve the actual problem?** (Function first)
+2. **Can I do this with fewer lines?** (Minimize code)
+3. **Is there a simpler way?** (Simplicity check)
+4. **Do I really need this abstraction?** (Avoid over-engineering)
+
+### When to Use Complex Solutions
+**ONLY when simple solutions:**
+- Don't work
+- Create maintenance problems
+- Have proven performance issues
+- Are required by external constraints
+
+### Examples of Function-First Decisions
+
+#### Charts: Simple First
+```typescript
+// ✅ START SIMPLE - Basic chart
+function FlowChart({ data }: { data: number[] }) {
+  return (
+    <ReactECharts 
+      option={{
+        series: [{ type: 'line', data }]
+      }} 
+    />
+  )
+}
+
+// Only add complexity when actually needed:
+// - Real-time updates? Add useEffect
+// - Multiple series? Add series array
+// - Custom styling? Add theme options
+```
+
+#### Forms: Minimal Code
+```typescript
+// ✅ START SIMPLE - Basic form
+function FlowForm({ onSubmit }: { onSubmit: (data: FlowData) => void }) {
+  const [rate, setRate] = useState('')
+  
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    onSubmit({ rate: Number(rate) })
+  }
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <input 
+        value={rate} 
+        onChange={e => setRate(e.target.value)}
+        placeholder="Flow rate" 
+      />
+      <button type="submit">Save</button>
+    </form>
+  )
+}
+
+// Only add validation, error handling, etc. when actually needed
+```
+
+## Anti-Patterns to Avoid
+
+### ❌ Premature Optimization
+```typescript
+// Don't optimize until you have a performance problem
+const memoizedCallback = useCallback(() => {
+  // Simple function that doesn't need memoization
+}, [])
+```
+
+### ❌ Over-Abstraction
+```typescript
+// Don't create abstractions until you have duplication
+interface IDataProcessor {
+  process(data: any): any
+}
+```
+
+### ❌ Configuration Overkill
+```typescript
+// Don't create configuration for things that won't change
+const CHART_CONFIG = {
+  width: '100%',
+  height: '400px',
+  // 50 lines of config for basic chart
+}
+```
+
+## Success Metrics
+
+A feature is successful when:
+- ✅ It works reliably
+- ✅ Code is under 50 lines when possible
+- ✅ Any developer can understand it in 2 minutes
+- ✅ It solves the user's problem directly
+- ✅ No unnecessary dependencies or abstractions
+
+## Emergency Simplification
+
+When code gets complex, immediately:
+1. **Delete unused code**
+2. **Inline small functions**
+3. **Remove unnecessary abstractions**
+4. **Combine related components**
+5. **Replace libraries with simple implementations**
+
+---
+
+**Remember: The best code is no code. The second best code is simple code that works.**

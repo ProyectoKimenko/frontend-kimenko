@@ -60,8 +60,8 @@ export default function FlowReporterAnalysis() {
             setError("La semana final debe ser mayor o igual a la inicial y menor o igual a 53");
             return false;
         }
-        if (endWeek - startWeek + 1 > 4) {
-            setError("No se pueden seleccionar más de 4 semanas");
+        if (endWeek - startWeek + 1 > 5) {
+            setError("No se pueden seleccionar más de 5 semanas");
             return false;
         }
         if (!windowSize || windowSize < 1 || windowSize > 365) {

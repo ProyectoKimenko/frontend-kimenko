@@ -80,9 +80,9 @@ export default function ParameterForm({
         return options;
     }, [year]);
 
-    // Opciones de semana final filtradas (no más de 4 semanas desde la inicial)
+    // Opciones de semana final filtradas (no más de 5 semanas desde la inicial)
     const endWeekOptions = useMemo(() => {
-        const maxEndWeek = Math.min(startWeek + 3, 53); // Máximo 4 semanas
+        const maxEndWeek = Math.min(startWeek + 4, 53); // Máximo 5 semanas
         return weekOptions.filter(option => 
             option.value >= startWeek && option.value <= maxEndWeek
         );
@@ -236,7 +236,7 @@ export default function ParameterForm({
                             ))}
                         </select>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Máximo 4 semanas consecutivas permitidas
+                            Máximo 5 semanas consecutivas permitidas
                         </p>
                     </div>
                 </div>
