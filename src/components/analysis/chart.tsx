@@ -7,33 +7,46 @@ import { BarChart3 } from 'lucide-react'
 export default function Chart({ data }: ChartProps) {
   const [showWaterLoss, setShowWaterLoss] = useState(true);
 
-  const timeZone = 'America/Santiago';
+  // Usar UTC-0 como el backend
+  const timeZone = 'UTC';
 
-  // Función helper para obtener clave de fecha (YYYY-MM-DD) en timezone específica
-  const getDateKey = (date: Date): string => {
-    return date.toLocaleDateString('en-US', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
+  // Helper function para obtener offset UTC-0
+  const getTimezoneOffset = (): string => {
+    return 'UTC+0';
   };
 
   const chartData = useMemo(() => {
     if (!data?.time_series || data.time_series.length === 0) {
-      return { timestamps: [], flowRates: [], waterLoss: [], labels: [] }
+      return { 
+        continuousTimestamps: [], 
+        continuousFlowRates: [], 
+        continuousWaterLoss: [], 
+        labels: [],
+        maxValue: 1,
+        hasData: false
+      }
     }
 
     console.log('🔍 Debug: Raw data sample:', {
       firstItem: data.time_series[0],
       lastItem: data.time_series[data.time_series.length - 1],
       totalItems: data.time_series.length
-    })
+    });
 
-    // Procesar datos con validación
+    // Procesar datos originales
     const processedData = data.time_series
       .map((item, index) => {
-        const timestampNum = Number(item.timestamp);
+        let timestampNum: number;
+        
+        if (typeof item.timestamp === 'string') {
+          if (item.timestamp.includes('T') || item.timestamp.includes('-')) {
+            timestampNum = new Date(item.timestamp).getTime();
+          } else {
+            timestampNum = Number(item.timestamp);
+          }
+        } else {
+          timestampNum = Number(item.timestamp);
+        }
         
         if (isNaN(timestampNum) || timestampNum <= 0) {
           console.warn('⚠️ Invalid timestamp at index', index, ':', item.timestamp);
@@ -47,130 +60,250 @@ export default function Chart({ data }: ChartProps) {
           return null;
         }
 
+        const flowRate = (item.flow_rate === null || item.flow_rate === undefined || isNaN(Number(item.flow_rate))) 
+          ? null 
+          : Number(item.flow_rate);
+          
+        const rollingMin = (item.RollingMin === null || item.RollingMin === undefined || isNaN(Number(item.RollingMin))) 
+          ? null 
+          : Number(item.RollingMin);
+
         return {
-          timestamp,
-          flowRate: Number(item.flow_rate),
-          waterLoss: Number(item.RollingMin) > 0 ? Number(item.RollingMin) : null
+          timestamp: timestamp.getTime(), // Usar milisegundos para facilitar búsqueda
+          flowRate,
+          rollingMin
         };
       })
-      .filter(item => item !== null);
+      .filter(item => item !== null)
+      .sort((a, b) => a.timestamp - b.timestamp);
 
     if (processedData.length === 0) {
       console.error('❌ No valid data after processing');
-      return { timestamps: [], flowRates: [], waterLoss: [], labels: [] };
+      return { 
+        continuousTimestamps: [], 
+        continuousFlowRates: [], 
+        continuousWaterLoss: [], 
+        labels: [],
+        maxValue: 1,
+        hasData: false
+      };
     }
 
-    console.log('✅ Processed data sample:', {
-      firstTimestamp: processedData[0].timestamp.toISOString(),
-      lastTimestamp: processedData[processedData.length - 1].timestamp.toISOString(),
-      validItems: processedData.length
+    // Crear mapa de datos existentes para búsqueda rápida
+    const dataMap = new Map();
+    processedData.forEach(item => {
+      // Redondear a minuto para hacer matching
+      const minuteTimestamp = Math.floor(item.timestamp / (60 * 1000)) * (60 * 1000);
+      dataMap.set(minuteTimestamp, {
+        flowRate: item.flowRate,
+        rollingMin: item.rollingMin
+      });
     });
 
-    const timestamps = processedData.map(item => item.timestamp);
-    const flowRates = processedData.map(item => item.flowRate);
-    const waterLoss = processedData.map(item => item.waterLoss);
+    // Obtener rango temporal completo
+    const startTime = processedData[0].timestamp;
+    const endTime = processedData[processedData.length - 1].timestamp;
+    
+    console.log('📅 Temporal range (UTC):', {
+      start: new Date(startTime).toISOString(),
+      end: new Date(endTime).toISOString(),
+      durationHours: (endTime - startTime) / (1000 * 60 * 60),
+      originalDataPoints: processedData.length
+    });
 
-    // Clave de fecha actual en timezone
-    const currentDateKey = getDateKey(new Date());
+    // Generar secuencia temporal continua minuto a minuto
+    const continuousTimestamps: Date[] = [];
+    const continuousFlowRates: (number | null)[] = [];
+    const continuousWaterLoss: (number | null)[] = [];
 
-    // Etiquetas con formato consistente
-    const labels = timestamps.map((timestamp, index) => {
-      const isToday = getDateKey(timestamp) === currentDateKey;
+    // Empezar desde el minuto redondeado del primer timestamp
+    let currentTime = Math.floor(startTime / (60 * 1000)) * (60 * 1000);
+    const endTimeRounded = Math.ceil(endTime / (60 * 1000)) * (60 * 1000);
+
+    while (currentTime <= endTimeRounded) {
+      const timestamp = new Date(currentTime);
+      continuousTimestamps.push(timestamp);
       
-      let label: string;
-      if (isToday) {
-        label = timestamp.toLocaleTimeString('es-ES', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone
-        });
+      // Buscar datos para este minuto específico
+      const dataForThisMinute = dataMap.get(currentTime);
+      
+      if (dataForThisMinute) {
+        continuousFlowRates.push(dataForThisMinute.flowRate);
+        continuousWaterLoss.push(dataForThisMinute.rollingMin);
       } else {
-        label = timestamp.toLocaleString('es-ES', {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone
-        });
+        continuousFlowRates.push(null);
+        continuousWaterLoss.push(null);
       }
+      
+      // Avanzar un minuto
+      currentTime += 60 * 1000;
+    }
 
-      if (index < 3) {
-        console.log(`🏷️ Label ${index}:`, {
-          timestamp: timestamp.toISOString(),
-          isToday,
-          label
-        });
+    // Calcular valores máximos solo de datos válidos
+    const validFlowValues = continuousFlowRates.filter(val => val !== null && val !== undefined) as number[];
+    const validLossValues = continuousWaterLoss.filter(val => val !== null && val !== undefined) as number[];
+    const allValidValues = [...validFlowValues, ...validLossValues];
+    const maxValue = allValidValues.length > 0 ? Math.max(...allValidValues) : 1;
+    const hasData = validFlowValues.length > 0 && validFlowValues.some(v => v > 0);
+
+    // Crear labels inteligentes para el eje X (en UTC)
+    const labels = continuousTimestamps.map((timestamp, index) => {
+      // Mostrar etiquetas cada cierto intervalo dependiendo de la cantidad de datos
+      const totalPoints = continuousTimestamps.length;
+      let showInterval: number;
+      
+      if (totalPoints <= 60) { // <= 1 hora: cada 5 minutos
+        showInterval = 5;
+      } else if (totalPoints <= 360) { // <= 6 horas: cada 30 minutos
+        showInterval = 30;
+      } else if (totalPoints <= 1440) { // <= 1 día: cada 2 horas
+        showInterval = 120;
+      } else { // > 1 día: cada 6 horas
+        showInterval = 360;
       }
+      
+      const minutes = timestamp.getUTCMinutes();
+      const hours = timestamp.getUTCHours();
+      
+      // Mostrar etiqueta solo en intervalos apropiados
+      let shouldShow = false;
+      if (showInterval === 5) {
+        shouldShow = minutes % 5 === 0;
+      } else if (showInterval === 30) {
+        shouldShow = minutes === 0 || minutes === 30;
+      } else if (showInterval === 120) {
+        shouldShow = minutes === 0 && hours % 2 === 0;
+      } else if (showInterval === 360) {
+        shouldShow = minutes === 0 && hours % 6 === 0;
+      }
+      
+      if (!shouldShow && index !== 0 && index !== totalPoints - 1) {
+        return ''; // Etiqueta vacía
+      }
+      
+      // Formatear en UTC
+      const dateStr = timestamp.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        timeZone: 'UTC'
+      });
+      const timeStr = timestamp.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+        hour12: false
+      });
+      
+      // Decidir si mostrar fecha
+      if (index === 0) {
+        return `${dateStr}\n${timeStr}`;
+      }
+      
+      const prevDate = continuousTimestamps[index - 1]?.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        timeZone: 'UTC'
+      });
+      
+      if (dateStr !== prevDate) {
+        return `${dateStr}\n${timeStr}`;
+      } else {
+        return timeStr;
+      }
+    });
 
-      return label;
+    console.log('✅ Generated continuous temporal data (UTC):', {
+      totalContinuousPoints: continuousTimestamps.length,
+      validFlowPoints: validFlowValues.length,
+      validLossPoints: validLossValues.length,
+      nullFlowPoints: continuousFlowRates.filter(v => v === null).length,
+      nullLossPoints: continuousWaterLoss.filter(v => v === null).length,
+      dataCompleteness: {
+        flow: `${((validFlowValues.length / continuousTimestamps.length) * 100).toFixed(1)}%`,
+        loss: `${((validLossValues.length / continuousTimestamps.length) * 100).toFixed(1)}%`
+      },
+      maxValue,
+      hasData,
+      timeRange: {
+        start: continuousTimestamps[0]?.toISOString(),
+        end: continuousTimestamps[continuousTimestamps.length - 1]?.toISOString()
+      }
     });
 
     return {
-      timestamps,
-      flowRates,
-      waterLoss,
-      labels
+      continuousTimestamps,
+      continuousFlowRates,
+      continuousWaterLoss,
+      labels,
+      maxValue,
+      hasData
     };
   }, [data]);
 
   const chartOption = useMemo(() => {
-    const { flowRates, waterLoss, labels, timestamps } = chartData;
+    const { continuousFlowRates, continuousWaterLoss, labels, continuousTimestamps, maxValue, hasData } = chartData;
+    const timezoneOffset = getTimezoneOffset();
 
-    // Clave de fecha actual en timezone (para tooltip)
-    const currentDateKey = getDateKey(new Date());
-
+    // Configuración de escala como el backend
+    const yAxisMax = hasData ? maxValue * 1.1 : 5;
+    
     return {
-      backgroundColor: 'transparent',
-      animation: true,
-      animationDuration: 300,
+      backgroundColor: 'white',
+      animation: false,
       title: {
-        text: 'Monitoreo de Caudal',
+        text: `Flujo (litros/min) - ${timezoneOffset}`,
         left: 'center',
-        textStyle: { fontSize: 18, fontWeight: '600', color: '#1f2937' }
+        textStyle: { 
+          fontSize: 14, 
+          fontWeight: 'bold', 
+          color: 'black'
+        }
       },
       legend: {
         top: '12%',
         data: [
-          'Caudal',
-          ...(showWaterLoss ? ['Pérdida de agua'] : [])
+          'Flujo total',
+          ...(showWaterLoss ? ['Límite de pérdida'] : [])
         ],
-        textStyle: { fontSize: 14, color: '#374151' }
+        textStyle: { fontSize: 10, color: 'black' }
       },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-        borderRadius: 8,
-        textStyle: { fontSize: 13, color: '#f9fafb' },
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        textStyle: { fontSize: 12, color: 'black' },
         formatter: function (params: TooltipParam[]) {
           const dataIndex = params[0]?.dataIndex;
-          if (dataIndex === undefined || !timestamps[dataIndex]) {
+          if (dataIndex === undefined || !continuousTimestamps[dataIndex]) {
             return 'Datos no disponibles';
           }
           
-          const realTimestamp = timestamps[dataIndex];
-          const isToday = getDateKey(realTimestamp) === currentDateKey;
+          const timestamp = continuousTimestamps[dataIndex];
+          // Formatear en UTC
+          const dateStr = timestamp.toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'UTC',
+            hour12: false
+          });
           
-          const dateStr = isToday 
-            ? realTimestamp.toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone
-              })
-            : realTimestamp.toLocaleString('es-ES', {
-                day: '2-digit',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone
-              });
-          
-          let result = `<div style="font-weight: 600; margin-bottom: 8px; color: #f9fafb;">${dateStr}</div>`;
+          let result = `<div style="font-weight: bold; margin-bottom: 8px;">${dateStr} (${timezoneOffset})</div>`;
 
           params.forEach((param: TooltipParam) => {
-            if (param.value !== null && param.value !== undefined) {
-              result += `<div style="margin: 6px 0; display: flex; justify-content: space-between;">
-                <span style="color: ${param.color};">${param.seriesName}:</span>
-                <strong style="color: #f9fafb; margin-left: 12px;">${Number(param.value).toFixed(2)} m³/h</strong>
+            if (param.value !== null && param.value !== undefined && param.seriesName) {
+              const value = Number(param.value).toFixed(2);
+              result += `<div style="margin: 4px 0;">
+                <span style="color: ${param.color};">●</span>
+                <span style="margin-left: 8px;">${param.seriesName}: ${value} litros/min</span>
+              </div>`;
+            } else if (param.seriesName) {
+              result += `<div style="margin: 4px 0;">
+                <span style="color: ${param.color};">●</span>
+                <span style="margin-left: 8px;">${param.seriesName}: Sin datos</span>
               </div>`;
             }
           });
@@ -190,22 +323,35 @@ export default function Chart({ data }: ChartProps) {
         boundaryGap: false,
         data: labels,
         axisLabel: {
-          fontSize: 12,
-          color: '#6b7280',
-          rotate: labels.length > 20 ? 45 : 0,
-          interval: labels.length <= 20 ? 0 : Math.max(1, Math.floor(labels.length / 12))
-        }
+          fontSize: 10,
+          color: 'black',
+          rotate: labels.filter(l => l).length > 20 ? 45 : 0,
+          interval: 0,
+          formatter: (value: string) => value || ''
+        },
+        axisLine: { lineStyle: { color: 'black' } },
+        axisTick: { lineStyle: { color: 'black' } }
       },
       yAxis: {
         type: 'value',
-        name: 'Caudal (m³/h)',
-        nameTextStyle: { color: '#6b7280', fontSize: 12 },
+        name: 'Flujo (litros/min)',
+        nameTextStyle: { color: 'black', fontSize: 12, fontWeight: 'bold' },
+        min: 0,
+        max: yAxisMax,
         axisLabel: {
-          fontSize: 11,
-          color: '#6b7280',
+          fontSize: 10,
+          color: 'black',
           formatter: (value: number) => value.toFixed(1)
         },
-        splitLine: { lineStyle: { type: 'dashed', color: '#e5e7eb' } }
+        axisLine: { lineStyle: { color: 'black' } },
+        axisTick: { lineStyle: { color: 'black' } },
+        splitLine: { 
+          lineStyle: { 
+            type: 'dashed', 
+            color: '#cccccc',
+            opacity: 0.7
+          } 
+        }
       },
       dataZoom: [
         { type: 'inside', start: 0, end: 100 },
@@ -215,39 +361,42 @@ export default function Chart({ data }: ChartProps) {
           end: 100,
           height: 20,
           bottom: 5,
-          handleStyle: { color: '#3b82f6' },
-          fillerColor: 'rgba(59,130,246,0.1)'
+          handleStyle: { color: '#1f77b4' },
+          fillerColor: 'rgba(31,119,180,0.1)'
         }
       ],
       series: [
         {
-          name: 'Caudal',
+          name: 'Flujo total',
           type: 'line',
-          smooth: true,
-          symbol: 'circle',
-          symbolSize: 3,
-          itemStyle: { color: '#3b82f6' },
+          data: continuousFlowRates, // Array continuo minuto a minuto
+          itemStyle: { color: '#1f77b4' },
           lineStyle: { width: 2 },
+          symbol: 'circle',
+          symbolSize: 2, // Símbolos más pequeños para muchos puntos
+          connectNulls: false, // No conectar a través de gaps
           areaStyle: {
             color: {
               type: 'linear',
               x: 0, y: 0, x2: 0, y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(59,130,246,0.3)' },
-                { offset: 1, color: 'rgba(59,130,246,0.05)' }
+                { offset: 0, color: 'rgba(31,119,180,0.3)' },
+                { offset: 1, color: 'rgba(31,119,180,0.05)' }
               ]
             }
-          },
-          data: flowRates
+          }
         },
         ...(showWaterLoss ? [{
-          name: 'Pérdida de agua',
+          name: 'Límite de pérdida',
           type: 'line',
-          smooth: true,
+          data: continuousWaterLoss, // Array continuo minuto a minuto
+          itemStyle: { color: '#d62728' },
+          lineStyle: { width: 2 },
           symbol: 'none',
-          data: waterLoss,
-          lineStyle: { width: 0 },
-          areaStyle: { color: 'rgba(239,68,68,0.6)' }
+          connectNulls: false,
+          areaStyle: { 
+            color: 'rgba(214,39,40,0.3)'
+          }
         }] : [])
       ]
     };
@@ -255,27 +404,14 @@ export default function Chart({ data }: ChartProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header simple (descomentado si lo necesitas) */}
-      {/* <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+      {/* Control para togglear */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Droplets className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Datos de Caudal en Tiempo Real
-            </h3>
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {chartData.flowRates.length} puntos de datos
-          </div>
-        </div>
-      </div> */}
-
-      {/* Control para togglear (descomentado y funcional) */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Opciones de visualización</span>
+            <BarChart3 className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-medium text-gray-700">
+              Opciones de visualización - {getTimezoneOffset()}
+            </span>
           </div>
 
           <label className="flex items-center gap-2 cursor-pointer">
@@ -285,17 +421,17 @@ export default function Chart({ data }: ChartProps) {
               onChange={(e) => setShowWaterLoss(e.target.checked)}
               className="rounded border-gray-300 text-red-600"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar pérdidas de agua</span>
+            <span className="text-sm text-gray-700">Mostrar límite de pérdida</span>
           </label>
         </div>
       </div>
 
-      {/* Gráfica */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Gráfica - temporal continua UTC */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
         <div className="p-6">
           <ReactECharts
             option={chartOption}
-            style={{ height: '400px', width: '100%' }}
+            style={{ height: '600px', width: '100%' }}
             opts={{ renderer: 'canvas' }}
           />
         </div>
