@@ -165,12 +165,13 @@ export default function XylemPage() {
 
         let filteredSeries = data.time_series;
 
-        // Clamp start and end to minDate/maxDate
-        const minDateMs = minDate ? new Date(minDate).getTime() : -Infinity;
-        const maxDateMs = maxDate ? new Date(maxDate).getTime() + 86399999 : Infinity;
+        // Use UTC consistently to avoid timezone offset issues
+        // Create dates at start of day in UTC
+        const minDateMs = minDate ? new Date(minDate + 'T00:00:00.000Z').getTime() : -Infinity;
+        const maxDateMs = maxDate ? new Date(maxDate + 'T23:59:59.999Z').getTime() : Infinity;
 
-        const start = startDate ? Math.max(minDateMs, new Date(startDate).getTime()) : minDateMs;
-        const end = endDate ? Math.min(maxDateMs, new Date(endDate).getTime() + 86399999) : maxDateMs;
+        const start = startDate ? Math.max(minDateMs, new Date(startDate + 'T00:00:00.000Z').getTime()) : minDateMs;
+        const end = endDate ? Math.min(maxDateMs, new Date(endDate + 'T23:59:59.999Z').getTime()) : maxDateMs;
 
         filteredSeries = filteredSeries.filter(item => {
             const ts = parseInt(item.timestamp);

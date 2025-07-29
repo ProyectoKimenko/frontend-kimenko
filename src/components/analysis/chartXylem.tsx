@@ -272,8 +272,9 @@ export default function ChartXylem({
       const minTimestamp = Math.min(...timestamps);
       const maxTimestamp = Math.max(...timestamps);
       
-      const startDate = new Date(minTimestamp).toLocaleDateString("es-ES");
-      const endDate = new Date(maxTimestamp).toLocaleDateString("es-ES");
+      // Use UTC to avoid timezone issues that cause day offset
+      const startDate = new Date(minTimestamp).toLocaleDateString("es-ES", { timeZone: 'UTC' });
+      const endDate = new Date(maxTimestamp).toLocaleDateString("es-ES", { timeZone: 'UTC' });
       
       filteredDateRange = `${startDate} - ${endDate}`;
     }
@@ -360,7 +361,7 @@ export default function ChartXylem({
       // subtitle: `Consumo horario - ${filteredDateRange}`,
       metadata: {
         "Período analizado": filteredDateRange,
-        "Total de registros": incrementalValues.length.toLocaleString(),
+        // "Total de registros": incrementalValues.length.toLocaleString(),
         "Tipo de análisis":
           lossMode === "rolling"
             ? "Rolling Min Multi-Ventana para detección de pérdidas"
