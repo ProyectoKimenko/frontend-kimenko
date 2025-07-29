@@ -7,9 +7,6 @@ import { BarChart3 } from 'lucide-react'
 export default function Chart({ data }: ChartProps) {
   const [showWaterLoss, setShowWaterLoss] = useState(true);
 
-  // Usar UTC-0 como el backend
-  const timeZone = 'UTC';
-
   // Helper function para obtener offset UTC-0
   const getTimezoneOffset = (): string => {
     return 'UTC+0';

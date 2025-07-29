@@ -265,11 +265,6 @@ export default function ChartXylem({
   const preparePDFReportData = useCallback(async (): Promise<PDFReportData> => {
     const chartImage = await captureChartImage();
     
-    // Use filtered date range instead of current date
-    const dateRangeText = data?.metadata 
-      ? `${data.metadata.dateRange.start} - ${data.metadata.dateRange.end}`
-      : new Date().toLocaleDateString("es-ES");
-
     const keyMetrics = [
       {
         title: "Consumo Total",
