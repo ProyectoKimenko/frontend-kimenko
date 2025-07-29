@@ -265,6 +265,19 @@ export default function ChartXylem({
   const preparePDFReportData = useCallback(async (): Promise<PDFReportData> => {
     const chartImage = await captureChartImage();
     
+    // Calculate actual filtered date range from the data being displayed
+    let filteredDateRange = "N/A";
+    if (filteredData && filteredData.length > 0) {
+      const timestamps = filteredData.map(item => parseInt(item.timestamp));
+      const minTimestamp = Math.min(...timestamps);
+      const maxTimestamp = Math.max(...timestamps);
+      
+      const startDate = new Date(minTimestamp).toLocaleDateString("es-ES");
+      const endDate = new Date(maxTimestamp).toLocaleDateString("es-ES");
+      
+      filteredDateRange = `${startDate} - ${endDate}`;
+    }
+    
     const keyMetrics = [
       {
         title: "Consumo Total",
@@ -344,12 +357,10 @@ export default function ChartXylem({
     };
     return {
       title: "Análisis de Consumo de Agua",
+      // subtitle: `Consumo horario - ${filteredDateRange}`,
       metadata: {
-        "Período analizado": data?.metadata
-          ? `${data.metadata.dateRange.start} - ${data.metadata.dateRange.end}`
-          : "N/A",
-        "Total de registros":
-          data?.metadata?.totalRecords.toLocaleString() || "0",
+        "Período analizado": filteredDateRange,
+        "Total de registros": incrementalValues.length.toLocaleString(),
         "Tipo de análisis":
           lossMode === "rolling"
             ? "Rolling Min Multi-Ventana para detección de pérdidas"
@@ -369,6 +380,7 @@ export default function ChartXylem({
     captureChartImage,
     incrementalValues.length,
     lossMode,
+    filteredData,
   ]);
 
   // Generate custom filename
