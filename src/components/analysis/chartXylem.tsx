@@ -25,6 +25,7 @@ export default function ChartXylem({
   endHour = 6,
 }: ChartXylemProps) {
   const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const [windowThreshold, setWindowThreshold] = useState<number>(7); // Add state
   const chartRef = useRef<ReactECharts>(null);
 
   const filteredData = useMemo(() => {
@@ -43,14 +44,17 @@ export default function ChartXylem({
     for (let i = 1; i < cumulativeRawValues.length; i++) {
       const value = cumulativeRawValues[i] - cumulativeRawValues[i - 1];
       if (value < 0) continue;
-      const timestamp = parseInt(filteredData[i].timestamp);
+      const timestamp = Number(filteredData[i].timestamp); // Usa Number() en lugar de parseInt()
       const date = new Date(timestamp);
+      
+      // Fix: Usar la hora local sin conversión automática de zona horaria
       const label = date.toLocaleString("es-ES", {
         day: "2-digit",
         month: "2-digit",
         year: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: 'UTC' // Fuerza UTC para evitar conversiones automáticas
       });
       result.push({ value, timestamp, label });
     }
@@ -69,10 +73,12 @@ export default function ChartXylem({
   const calculateRollingMin = useCallback((values: number[]): number[] => {
     if (!values || values.length === 0) return [];
     const windowSize = Math.max(7, Math.floor(values.length * 0.15));
+    const minWindowSize = Math.max(3, windowThreshold); // Use threshold with minimum 3
     const rollingMinF: number[] = [];
     const rollingMinB: number[] = [];
     const rollingMinC: number[] = [];
 
+    // Forward window
     for (let i = 0; i < values.length; i++) {
       const start = i;
       const end = Math.min(i + windowSize, values.length);
@@ -80,6 +86,7 @@ export default function ChartXylem({
       rollingMinF[i] = Math.min(...window);
     }
 
+    // Backward window  
     for (let i = 0; i < values.length; i++) {
       const start = Math.max(0, i - windowSize + 1);
       const end = i + 1;
@@ -87,6 +94,7 @@ export default function ChartXylem({
       rollingMinB[i] = window.length > 0 ? Math.min(...window) : values[i];
     }
 
+    // Centered window
     for (let i = 0; i < values.length; i++) {
       const halfWindow = Math.floor(windowSize / 2);
       const start = Math.max(0, i - halfWindow);
@@ -95,18 +103,35 @@ export default function ChartXylem({
       rollingMinC[i] = Math.min(...window);
     }
 
+    // Combine results - Fix extremes by only using valid windows
     const rollingMin: number[] = [];
     for (let i = 0; i < values.length; i++) {
-      const maxOfThree = Math.max(
-        rollingMinF[i],
-        rollingMinB[i],
-        rollingMinC[i]
-      );
-      rollingMin[i] = Math.min(values[i], maxOfThree);
+      const validMins: number[] = [];
+      
+      // Calculate actual window sizes
+      const forwardWindowSize = Math.min(i + windowSize, values.length) - i;
+      const backwardWindowSize = (i + 1) - Math.max(0, i - windowSize + 1);
+      const halfWindow = Math.floor(windowSize / 2);
+      const centeredStart = Math.max(0, i - halfWindow);
+      const centeredEnd = Math.min(values.length, i + halfWindow + 1);
+      const centeredWindowSize = centeredEnd - centeredStart;
+      
+      // Only use windows that meet minimum size requirement
+      if (forwardWindowSize >= minWindowSize) validMins.push(rollingMinF[i]);
+      if (backwardWindowSize >= minWindowSize) validMins.push(rollingMinB[i]);
+      if (centeredWindowSize >= minWindowSize) validMins.push(rollingMinC[i]);
+      
+      // Fallback: if no valid windows, use all three (safety net)
+      if (validMins.length === 0) {
+        validMins.push(rollingMinF[i], rollingMinB[i], rollingMinC[i]);
+      }
+      
+      const maxOfValid = Math.max(...validMins);
+      rollingMin[i] = Math.min(values[i], maxOfValid);
     }
 
     return rollingMin;
-  }, []);
+  }, [windowThreshold]); // FIXED: Add windowThreshold to dependencies
 
   // Update rollingMinValues to be lossValues, based on mode
   const lossValues = useMemo(() => {
@@ -115,11 +140,12 @@ export default function ChartXylem({
     if (lossMode === "rolling") {
       return calculateRollingMin(incrementalValues);
     } else {
-      // 'night' mode
+      // 'night' mode - Fix: Usar UTC para consistencia
       return incrementalValues.map((val, idx) => {
         const ts = rawIncrementalData[idx].timestamp;
         const date = new Date(ts);
-        const hour = date.getHours();
+        // Fix: Usar getUTCHours() en lugar de getHours()
+        const hour = date.getUTCHours();
         const isNightHour =
           startHour <= endHour
             ? hour >= startHour && hour < endHour
@@ -238,6 +264,12 @@ export default function ChartXylem({
   // In preparePDFReportData, update to include lossMode in title or metadata if desired
   const preparePDFReportData = useCallback(async (): Promise<PDFReportData> => {
     const chartImage = await captureChartImage();
+    
+    // Use filtered date range instead of current date
+    const dateRangeText = data?.metadata 
+      ? `${data.metadata.dateRange.start} - ${data.metadata.dateRange.end}`
+      : new Date().toLocaleDateString("es-ES");
+
     const keyMetrics = [
       {
         title: "Consumo Total",
@@ -317,7 +349,6 @@ export default function ChartXylem({
     };
     return {
       title: "Análisis de Consumo de Agua",
-      subtitle: `Consumo horario - ${new Date().toLocaleDateString("es-ES")}`,
       metadata: {
         "Período analizado": data?.metadata
           ? `${data.metadata.dateRange.start} - ${data.metadata.dateRange.end}`
@@ -344,6 +375,13 @@ export default function ChartXylem({
     incrementalValues.length,
     lossMode,
   ]);
+
+  // Generate custom filename
+  const generateFilename = useCallback(() => {
+    const baseFilename = data?.metadata?.filename?.replace(/\.[^/.]+$/, "") || "analisis";
+    const currentDate = new Date().toISOString().slice(0, 10);
+    return `reporte-${baseFilename}-${currentDate}.pdf`;
+  }, [data?.metadata?.filename]);
 
   // Update chartConfiguration: Set backgroundColor to white, use chartType for Consumo series
   const chartConfiguration = useMemo(() => {
@@ -459,28 +497,52 @@ export default function ChartXylem({
   // In return, add simple selector for chart type above the chart
   return (
     <div className="space-y-6">
-      {/* Chart Type Selector */}
-      <div className="flex gap-4 justify-end">
-        <button
-          onClick={() => setChartType("line")}
-          className={`px-4 py-2 rounded-lg ${
-            chartType === "line"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-900"
-          }`}
-        >
-          Curva
-        </button>
-        <button
-          onClick={() => setChartType("bar")}
-          className={`px-4 py-2 rounded-lg ${
-            chartType === "bar"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-900"
-          }`}
-        >
-          Barras
-        </button>
+      {/* Controls Section */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        {/* Window Threshold Selector - Only show in rolling mode */}
+        {lossMode === "rolling" && (
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+              Umbral de Ventana:
+            </label>
+            <select
+              value={windowThreshold}
+              onChange={(e) => setWindowThreshold(Number(e.target.value))}
+              className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
+            >
+              <option value={3}>3 puntos (mínimo)</option>
+              <option value={5}>5 puntos</option>
+              <option value={7}>7 puntos (defecto)</option>
+              <option value={10}>10 puntos</option>
+              <option value={15}>15 puntos</option>
+              <option value={20}>20 puntos</option>
+            </select>
+          </div>
+        )}
+        
+        {/* Chart Type Selector */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setChartType("line")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              chartType === "line"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+            }`}
+          >
+            Curva
+          </button>
+          <button
+            onClick={() => setChartType("bar")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              chartType === "bar"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+            }`}
+          >
+            Barras
+          </button>
+        </div>
       </div>
 
       {/* Chart */}
@@ -521,6 +583,7 @@ export default function ChartXylem({
         <PDFReportGenerator
           preparePDFData={preparePDFReportData}
           buttonText="Generar PDF"
+          filename={generateFilename()}  // Pass custom filename
         />
       </div>
     </div>

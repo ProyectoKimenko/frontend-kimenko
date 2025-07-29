@@ -10,12 +10,14 @@ interface PDFReportGeneratorProps {
     options?: PDFReportOptions
     className?: string
     buttonText?: string
+    filename?: string  // Add filename prop
 }
 
 export default function PDFReportGenerator({
     preparePDFData,
     className = '',
-    buttonText = 'Generar Reporte PDF'
+    buttonText = 'Generar Reporte PDF',
+    filename  // Add filename to destructuring
 }: PDFReportGeneratorProps) {
     const [isGenerating, setIsGenerating] = useState(false)
 
@@ -221,15 +223,16 @@ export default function PDFReportGenerator({
                 pdf.text("Kimenko - Análisis Profesional de Consumo", pageWidth / 2, pageHeight - 10, { align: "center" });
             }
 
-            // Save PDF
-            pdf.save(`reporte-analisis-${new Date().toISOString().slice(0, 10)}.pdf`);
+            // Save PDF - Update to use custom filename
+            const defaultFilename = `reporte-analisis-${new Date().toISOString().slice(0, 10)}.pdf`;
+            pdf.save(filename || defaultFilename);
 
         } catch (error) {
             console.error("Error generating PDF:", error);
         } finally {
             setIsGenerating(false);
         }
-    }, [preparePDFData]);
+    }, [preparePDFData, filename]);  // Add filename to dependencies
 
     return (
         <button
