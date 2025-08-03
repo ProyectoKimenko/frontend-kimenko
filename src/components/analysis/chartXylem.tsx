@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import ReactECharts from "echarts-for-react";
 import PDFReportGenerator from "@/components/reports/PDFReportGenerator";
 import { Download } from "lucide-react";
@@ -9,7 +9,6 @@ import type {
 } from "@/types/components/analysis/typesXylem";
 import type { PDFReportData } from "../../types/components/reports/typesPDFReport";
 
-// Update props
 interface ChartXylemProps {
   data: XylemData;
   lossMode?: "rolling" | "night";
@@ -17,7 +16,6 @@ interface ChartXylemProps {
   endHour?: number;
 }
 
-// Reintroduce chartType state
 export default function ChartXylem({
   data,
   lossMode = "rolling",
@@ -25,190 +23,125 @@ export default function ChartXylem({
   endHour = 6,
 }: ChartXylemProps) {
   const [chartType, setChartType] = useState<"line" | "bar">("line");
-  const [windowThreshold, setWindowThreshold] = useState<number>(7); // Add state
+  const [windowThreshold, setWindowThreshold] = useState(12);
+  const [windowInput, setWindowInput] = useState("12");
   const chartRef = useRef<ReactECharts>(null);
 
-  const filteredData = useMemo(() => {
-    return data?.time_series || [];
-  }, [data]);
-
-  const cumulativeRawValues = useMemo(() => {
-    return filteredData.map((item: XylemDataItem) => Number(item.valor));
-  }, [filteredData]);
-
+  const filteredData = data?.time_series || [];
   const unit = filteredData[0]?.unidad || "kWh";
 
-  const rawIncrementalData = useMemo(() => {
-    if (!cumulativeRawValues || cumulativeRawValues.length <= 1) return [];
-    const result: Array<{ value: number; timestamp: number; label: string }> = [];
-    for (let i = 1; i < cumulativeRawValues.length; i++) {
-      const value = cumulativeRawValues[i] - cumulativeRawValues[i - 1];
+  // Sincronizar windowInput con windowThreshold cuando cambie externamente
+  useEffect(() => {
+    setWindowInput(windowThreshold.toString());
+  }, [windowThreshold]);
+
+  const { incrementalValues, dateLabels, rawIncrementalData } = useMemo(() => {
+    if (filteredData.length <= 1) return { incrementalValues: [], dateLabels: [], rawIncrementalData: [] };
+
+    const cumulativeValues = filteredData.map(item => Number(item.valor));
+    const values: number[] = [];
+    const labels: string[] = [];
+    const rawData: Array<{ value: number; timestamp: number; label: string }> = [];
+
+    for (let i = 1; i < cumulativeValues.length; i++) {
+      const value = cumulativeValues[i] - cumulativeValues[i - 1];
       if (value < 0) continue;
-      const timestamp = Number(filteredData[i].timestamp); // Usa Number() en lugar de parseInt()
+
+      const timestamp = Number(filteredData[i].timestamp);
       const date = new Date(timestamp);
-      
-      // Fix: Usar la hora local sin conversión automática de zona horaria
       const label = date.toLocaleString("es-ES", {
         day: "2-digit",
         month: "2-digit",
         year: "2-digit",
         hour: "2-digit",
-        minute: "2-digit",
-        timeZone: 'UTC' // Fuerza UTC para evitar conversiones automáticas
+        minute: "2-digit"
       });
-      result.push({ value, timestamp, label });
+
+      values.push(value);
+      labels.push(label);
+      rawData.push({ value, timestamp, label });
     }
-    return result;
-  }, [cumulativeRawValues, filteredData]);
 
-  const processedData = useMemo(() => {
-    if (!rawIncrementalData.length) return { values: [], labels: [] };
-    const values = rawIncrementalData.map((item) => item.value);
-    const labels = rawIncrementalData.map((item) => item.label);
-    return { values, labels };
-  }, [rawIncrementalData]);
+    return { incrementalValues: values, dateLabels: labels, rawIncrementalData: rawData };
+  }, [filteredData]);
 
-  const { values: incrementalValues, labels: dateLabels } = processedData;
-
-  const calculateRollingMin = useCallback((values: number[]): number[] => {
+  const calculateRollingMin = (values: number[]): number[] => {
     if (!values || values.length === 0) return [];
-    const windowSize = Math.max(7, Math.floor(values.length * 0.15));
-    const minWindowSize = Math.max(3, windowThreshold); // Use threshold with minimum 3
-    const rollingMinF: number[] = [];
-    const rollingMinB: number[] = [];
-    const rollingMinC: number[] = [];
 
-    // Forward window
-    for (let i = 0; i < values.length; i++) {
-      const start = i;
-      const end = Math.min(i + windowSize, values.length);
+    const n = values.length;
+    const result = new Array(n).fill(0);
+
+    // Sliding window approach with minimum propagation
+    // Similar to the Python update_rolling_min function
+    for (let start = 0; start <= n - windowThreshold; start++) {
+      const end = start + windowThreshold;
+
+      // Find minimum in current window
       const window = values.slice(start, end);
-      rollingMinF[i] = Math.min(...window);
-    }
+      const winMin = Math.min(...window);
 
-    // Backward window  
-    for (let i = 0; i < values.length; i++) {
-      const start = Math.max(0, i - windowSize + 1);
-      const end = i + 1;
-      const window = values.slice(start, end);
-      rollingMinB[i] = window.length > 0 ? Math.min(...window) : values[i];
-    }
-
-    // Centered window
-    for (let i = 0; i < values.length; i++) {
-      const halfWindow = Math.floor(windowSize / 2);
-      const start = Math.max(0, i - halfWindow);
-      const end = Math.min(values.length, i + halfWindow + 1);
-      const window = values.slice(start, end);
-      rollingMinC[i] = Math.min(...window);
-    }
-
-    // Combine results - Fix extremes by only using valid windows
-    const rollingMin: number[] = [];
-    for (let i = 0; i < values.length; i++) {
-      const validMins: number[] = [];
-      
-      // Calculate actual window sizes
-      const forwardWindowSize = Math.min(i + windowSize, values.length) - i;
-      const backwardWindowSize = (i + 1) - Math.max(0, i - windowSize + 1);
-      const halfWindow = Math.floor(windowSize / 2);
-      const centeredStart = Math.max(0, i - halfWindow);
-      const centeredEnd = Math.min(values.length, i + halfWindow + 1);
-      const centeredWindowSize = centeredEnd - centeredStart;
-      
-      // Only use windows that meet minimum size requirement
-      if (forwardWindowSize >= minWindowSize) validMins.push(rollingMinF[i]);
-      if (backwardWindowSize >= minWindowSize) validMins.push(rollingMinB[i]);
-      if (centeredWindowSize >= minWindowSize) validMins.push(rollingMinC[i]);
-      
-      // Fallback: if no valid windows, use all three (safety net)
-      if (validMins.length === 0) {
-        validMins.push(rollingMinF[i], rollingMinB[i], rollingMinC[i]);
+      // Propagate this minimum to ALL points in the window
+      // Keep the maximum value if point already has a higher minimum
+      for (let j = start; j < end; j++) {
+        if (result[j] < winMin) {
+          result[j] = winMin;
+        }
       }
-      
-      const maxOfValid = Math.max(...validMins);
-      rollingMin[i] = Math.min(values[i], maxOfValid);
     }
 
-    return rollingMin;
-  }, [windowThreshold]); // FIXED: Add windowThreshold to dependencies
+    return result;
+  };
 
-  // Update rollingMinValues to be lossValues, based on mode
   const lossValues = useMemo(() => {
-    if (!incrementalValues || incrementalValues.length === 0) return [];
+    if (incrementalValues.length === 0) return [];
 
     if (lossMode === "rolling") {
       return calculateRollingMin(incrementalValues);
-    } else {
-      // 'night' mode - Fix: Usar UTC para consistencia
-      return incrementalValues.map((val, idx) => {
-        const ts = rawIncrementalData[idx].timestamp;
-        const date = new Date(ts);
-        // Fix: Usar getUTCHours() en lugar de getHours()
-        const hour = date.getUTCHours();
-        const isNightHour =
-          startHour <= endHour
-            ? hour >= startHour && hour < endHour
-            : hour >= startHour || hour < endHour;
-        return isNightHour ? val : 0;
-      });
     }
-  }, [
-    incrementalValues,
-    lossMode,
-    calculateRollingMin,
-    startHour,
-    endHour,
-    rawIncrementalData,
-  ]);
 
-  // Update waterLossStats to use lossValues instead of rollingMinValues
-  const waterLossStats = useMemo(() => {
-    if (
-      !incrementalValues ||
-      incrementalValues.length === 0 ||
-      !lossValues.length
-    ) {
-      return { totalLoss: 0, lossPercentage: 0, avgLoss: 0 };
+    return incrementalValues.map((val, idx) => {
+      const timestamp = rawIncrementalData[idx].timestamp;
+      const hour = new Date(timestamp).getUTCHours();
+      const isNightHour = startHour <= endHour
+        ? hour >= startHour && hour < endHour
+        : hour >= startHour || hour < endHour;
+      return isNightHour ? val : 0;
+    });
+  }, [incrementalValues, lossMode, windowThreshold, startHour, endHour, rawIncrementalData]);
+
+  const stats = useMemo(() => {
+    if (incrementalValues.length === 0) {
+      return {
+        totalConsumption: 0,
+        totalLoss: 0,
+        lossPercentage: 0,
+        efficiency: 0
+      };
     }
-    const totalLoss = lossValues.reduce((sum, val) => sum + val, 0);
+
     const totalConsumption = incrementalValues.reduce((sum, val) => sum + val, 0);
-    const adjustedTotalLoss = Math.min(totalLoss, totalConsumption);
-    let lossPercentage = totalConsumption > 0 ? (adjustedTotalLoss / totalConsumption) * 100 : 0;
-    lossPercentage = Math.max(0, Math.min(100, lossPercentage));
-    const avgLoss = lossValues.length > 0 ? adjustedTotalLoss / lossValues.length : 0;
+    const totalLoss = Math.min(
+      lossValues.reduce((sum, val) => sum + val, 0),
+      totalConsumption
+    );
+    const lossPercentage = totalConsumption > 0
+      ? Math.max(0, Math.min(100, (totalLoss / totalConsumption) * 100))
+      : 0;
+    const efficiency = Math.max(0, Math.min(100, 100 - lossPercentage));
+
     return {
-      totalLoss: parseFloat(adjustedTotalLoss.toFixed(2)),
+      totalConsumption: parseFloat(totalConsumption.toFixed(2)),
+      totalLoss: parseFloat(totalLoss.toFixed(2)),
       lossPercentage: parseFloat(lossPercentage.toFixed(1)),
-      avgLoss: parseFloat(avgLoss.toFixed(2)),
+      efficiency: parseFloat(efficiency.toFixed(2)),
     };
   }, [incrementalValues, lossValues]);
 
-  // ... keep analysisStats, but it uses waterLossStats ...
-  const analysisStats = useMemo(() => {
-    if (!incrementalValues || incrementalValues.length === 0) {
-      return { totalConsumption: 0, efficiency: 0 };
-    }
-    const totalConsumption = incrementalValues.reduce((acc, val) => acc + val, 0);
-    let efficiency = 100 - waterLossStats.lossPercentage;
-    efficiency = Math.max(0, Math.min(100, efficiency));
-    return {
-      totalConsumption: parseFloat(totalConsumption.toFixed(2)),
-      efficiency: parseFloat(efficiency.toFixed(2)),
-    };
-  }, [incrementalValues, waterLossStats]);
-
-  // Update exportCSV to use lossValues
-  const exportCSV = useCallback(() => {
+  const exportCSV = () => {
     const csvContent = [
       ["Date", "Consumption", "Water Loss", "Unit"].join(","),
       ...incrementalValues.map((value, idx) =>
-        [
-          dateLabels[idx] || "",
-          value,
-          lossValues[idx] || 0,
-          unit,
-        ].join(",")
+        [dateLabels[idx] || "", value, lossValues[idx] || 0, unit].join(",")
       ),
     ].join("\n");
 
@@ -216,337 +149,242 @@ export default function ChartXylem({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `xylem-analysis-hourly-${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`;
+    a.download = `xylem-analysis-hourly-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [incrementalValues, dateLabels, lossValues, unit]);
+  };
 
-  const captureChartImage = useCallback((): Promise<string | null> => {
+  const captureChartImage = (): Promise<string | null> => {
     return new Promise((resolve) => {
-      if (!chartRef.current) {
+      const chartInstance = chartRef.current?.getEchartsInstance();
+      if (!chartInstance) {
         resolve(null);
         return;
       }
 
-      try {
-        const chartInstance = chartRef.current.getEchartsInstance();
-        if (!chartInstance) {
+      setTimeout(() => {
+        try {
+          const imageData = chartInstance.getDataURL({
+            type: "png",
+            pixelRatio: 2,
+            backgroundColor: "#ffffff",
+          });
+          resolve(imageData?.startsWith("data:image/png;base64,") ? imageData : null);
+        } catch {
           resolve(null);
-          return;
         }
-
-        setTimeout(() => {
-          try {
-            const imageData = chartInstance.getDataURL({
-              type: "png",
-              pixelRatio: 2,
-              backgroundColor: "#ffffff",
-            });
-            if (imageData && imageData.startsWith("data:image/png;base64,")) {
-              resolve(imageData);
-            } else {
-              resolve(null);
-            }
-          } catch (error) {
-            console.error("Error capturing chart:", error);
-            resolve(null);
-          }
-        }, 300);
-      } catch (error) {
-        console.error("Error accessing chart instance:", error);
-        resolve(null);
-      }
+      }, 300);
     });
-  }, []);
+  };
 
-  // In preparePDFReportData, update to include lossMode in title or metadata if desired
-  const preparePDFReportData = useCallback(async (): Promise<PDFReportData> => {
+  const preparePDFReportData = async (): Promise<PDFReportData> => {
     const chartImage = await captureChartImage();
-    
-    // Calculate actual filtered date range from the data being displayed
-    let filteredDateRange = "N/A";
-    if (filteredData && filteredData.length > 0) {
-      const timestamps = filteredData.map(item => parseInt(item.timestamp));
-      const minTimestamp = Math.min(...timestamps);
-      const maxTimestamp = Math.max(...timestamps);
-      
-      // Use UTC to avoid timezone issues that cause day offset
-      const startDate = new Date(minTimestamp).toLocaleDateString("es-ES", { timeZone: 'UTC' });
-      const endDate = new Date(maxTimestamp).toLocaleDateString("es-ES", { timeZone: 'UTC' });
-      
-      filteredDateRange = `${startDate} - ${endDate}`;
-    }
-    
-    const keyMetrics = [
-      {
-        title: "Consumo Total",
-        value: analysisStats.totalConsumption.toLocaleString(),
-        subtitle: unit,
-        color: [30, 64, 175],
-      },
-      {
-        title: "Pérdida de Agua",
-        value: `${waterLossStats.lossPercentage}%`,
-        subtitle: "del total",
-        color: [220, 38, 38],
-      },
-      {
-        title: "Eficiencia",
-        value: `${analysisStats.efficiency}%`,
-        subtitle: "Rendimiento",
-        color: [5, 150, 105],
-      },
-    ];
-    const statisticalSummary = {
-      headers: ["Métrica", "Valor", "Unidad"],
-      rows: [
-        ["Consumo Total", analysisStats.totalConsumption.toString(), unit],
-        ["Pérdida Total", waterLossStats.totalLoss.toString(), unit],
-        ["Pérdida Porcentual", waterLossStats.lossPercentage.toString(), "%"],
-        ["Eficiencia", analysisStats.efficiency.toString(), "%"],
-      ],
-    };
+
+    const filteredDateRange = filteredData.length > 0
+      ? (() => {
+        const timestamps = filteredData.map(item => parseInt(item.timestamp));
+        const startDate = new Date(Math.min(...timestamps)).toLocaleDateString("es-ES", { timeZone: 'UTC' });
+        const endDate = new Date(Math.max(...timestamps)).toLocaleDateString("es-ES", { timeZone: 'UTC' });
+        return `${startDate} - ${endDate}`;
+      })()
+      : "N/A";
+
     const insights = [];
-    if (waterLossStats.lossPercentage > 20) {
-      insights.push(
-        `Alto nivel de pérdida de agua: ${waterLossStats.lossPercentage}%. Se recomienda investigar las causas.`
-      );
-    } else if (waterLossStats.lossPercentage > 10) {
-      insights.push(
-        `Nivel moderado de pérdida de agua: ${waterLossStats.lossPercentage}%. Considerar medidas de mejora.`
-      );
+    if (stats.lossPercentage > 20) {
+      insights.push(`Alto nivel de pérdida de agua: ${stats.lossPercentage}%. Se recomienda investigar las causas.`);
+    } else if (stats.lossPercentage > 10) {
+      insights.push(`Nivel moderado de pérdida de agua: ${stats.lossPercentage}%. Considerar medidas de mejora.`);
     } else {
-      insights.push(
-        `Bajo nivel de pérdida de agua: ${waterLossStats.lossPercentage}%. Sistema eficiente.`
-      );
+      insights.push(`Bajo nivel de pérdida de agua: ${stats.lossPercentage}%. Sistema eficiente.`);
     }
-    if (analysisStats.efficiency < 80) {
-      insights.push(
-        `Eficiencia del ${analysisStats.efficiency}% indica oportunidades de mejora.`
-      );
+    if (stats.efficiency < 80) {
+      insights.push(`Eficiencia del ${stats.efficiency}% indica oportunidades de mejora.`);
     }
-    const projections = {
-      headers: ["Período", "Consumo Proyectado", "Pérdida Proyectada"],
-      rows: [
-        [
-          "Próxima semana",
-          (
-            (analysisStats.totalConsumption * 7) /
-            incrementalValues.length
-          ).toFixed(2),
-          ((waterLossStats.totalLoss * 7) / incrementalValues.length).toFixed(2),
-        ],
-        [
-          "Próximo mes",
-          (
-            (analysisStats.totalConsumption * 30) /
-            incrementalValues.length
-          ).toFixed(2),
-          ((waterLossStats.totalLoss * 30) / incrementalValues.length).toFixed(2),
-        ],
-        [
-          "Próximo año",
-          (
-            (analysisStats.totalConsumption * 365) /
-            incrementalValues.length
-          ).toFixed(2),
-          ((waterLossStats.totalLoss * 365) / incrementalValues.length).toFixed(2),
-        ],
-      ],
-    };
+
     return {
       title: "Análisis de Consumo de Agua",
-      // subtitle: `Consumo horario - ${filteredDateRange}`,
       metadata: {
         "Período analizado": filteredDateRange,
-        // "Total de registros": incrementalValues.length.toLocaleString(),
-        "Tipo de análisis":
-          lossMode === "rolling"
-            ? "Rolling Min Multi-Ventana para detección de pérdidas"
-            : "Modo Nocturno para detección de pérdidas",
+        "Tipo de análisis": lossMode === "rolling"
+          ? `Rolling Window (${windowThreshold}h) para detección de pérdidas`
+          : "Modo Nocturno para detección de pérdidas",
+        "Recinto": data?.metadata?.filename?.replace(/\.[^/.]+$/, "") || "N/A",
       },
-      keyMetrics,
-      statisticalSummary,
-      projections,
+      keyMetrics: [
+        { title: "Consumo Total", value: stats.totalConsumption.toLocaleString(), subtitle: unit, color: [30, 64, 175] },
+        { title: "Pérdida de Agua", value: `${stats.lossPercentage}%`, subtitle: "del total", color: [220, 38, 38] },
+        { title: "Eficiencia", value: `${stats.efficiency}%`, subtitle: "Rendimiento", color: [5, 150, 105] },
+      ],
+      statisticalSummary: {
+        headers: ["Métrica", "Valor", "Unidad"],
+        rows: [
+          ["Consumo Total", stats.totalConsumption.toString(), unit],
+          ["Pérdida Total", stats.totalLoss.toString(), unit],
+          // ["Pérdida Porcentual", stats.lossPercentage.toString(), "%"],
+          ["Eficiencia", stats.efficiency.toString(), "%"],
+        ],
+      },
+      projections: {
+        headers: ["Período", "Consumo Proyectado", "Pérdida Proyectada"],
+        rows: [
+          ["Próxima semana", ((stats.totalConsumption * 7) / incrementalValues.length).toFixed(2), ((stats.totalLoss * 7) / incrementalValues.length).toFixed(2)],
+          ["Próximo mes", ((stats.totalConsumption * 30) / incrementalValues.length).toFixed(2), ((stats.totalLoss * 30) / incrementalValues.length).toFixed(2)],
+          ["Próximo año", ((stats.totalConsumption * 365) / incrementalValues.length).toFixed(2), ((stats.totalLoss * 365) / incrementalValues.length).toFixed(2)],
+        ],
+      },
       chartImage: chartImage || undefined,
       insights: insights.slice(0, 3),
     };
-  }, [
-    analysisStats,
-    waterLossStats,
-    unit,
-    data,
-    captureChartImage,
-    incrementalValues.length,
-    lossMode,
-    filteredData,
-  ]);
+  };
 
-  // Generate custom filename
-  const generateFilename = useCallback(() => {
+  const generateFilename = () => {
     const baseFilename = data?.metadata?.filename?.replace(/\.[^/.]+$/, "") || "analisis";
     const currentDate = new Date().toISOString().slice(0, 10);
     return `reporte-${baseFilename}-${currentDate}.pdf`;
-  }, [data?.metadata?.filename]);
+  };
 
-  // Update chartConfiguration: Set backgroundColor to white, use chartType for Consumo series
-  const chartConfiguration = useMemo(() => {
-    return {
-      backgroundColor: "#ffffff",
-      title: {
-        text: `Análisis de consumo horario`,
-        subtext: `Pérdida: ${waterLossStats.lossPercentage.toFixed(
-          1
-        )}% • Eficiencia: ${analysisStats.efficiency.toFixed(1)}% (${lossMode === "rolling" ? "Rolling Window" : "Modo Nocturno"})`,
-        left: "center",
-      },
-      legend: {
-        top: "12%",
-        data: ["Consumo", "Agua Perdida"],
-      },
-      tooltip: {
-        trigger: "axis",
-        formatter: (params: TooltipParams[]) => {
-          const date = params[0]?.axisValue;
-          let content = `<strong>${date}</strong><br/>`;
+  const chartConfiguration = useMemo(() => ({
+    backgroundColor: "#ffffff",
+    title: {
+      text: "Análisis de consumo horario",
+      subtext: `Pérdida: ${stats.lossPercentage}% • Eficiencia: ${stats.efficiency}% (${lossMode === "rolling" ? `Rolling Window ${windowThreshold}h` : "Modo Nocturno"})`,
+      left: "center",
+    },
+    legend: {
+      top: "12%",
+      data: ["Consumo", "Agua Perdida"],
+    },
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: TooltipParams[]) => {
+        const date = params[0]?.axisValue;
+        let content = `<strong>${date}</strong><br/>`;
 
-          let consumption = 0;
-          let waterLoss = 0;
+        const consumption = params.find(p => p.seriesName === "Consumo")?.data as number || 0;
+        const waterLoss = params.find(p => p.seriesName === "Agua Perdida")?.data as number || 0;
 
-          params.forEach((param) => {
-            if (param.data !== null && param.data !== undefined) {
-              const value =
-                typeof param.data === "number"
-                  ? param.data.toFixed(2)
-                  : param.data;
-              if (param.seriesName === "Consumo") {
-                consumption = parseFloat(value);
-                content += `Consumo Total: ${value} ${unit}<br/>`;
-              } else if (
-                param.seriesName === "Agua Perdida"
-              ) {
-                waterLoss = parseFloat(value);
-                content += `Agua Perdida: ${value} ${unit}<br/>`;
-              }
-            }
-          });
+        content += `Consumo Total: ${consumption.toFixed(2)} ${unit}<br/>`;
+        content += `Agua Perdida: ${waterLoss.toFixed(2)} ${unit}<br/>`;
 
-          if (consumption > 0 && waterLoss >= 0) {
-            const usefulConsumption = consumption - waterLoss;
-            const efficiency =
-              consumption > 0
-                ? (usefulConsumption / consumption) * 100
-                : 100;
-            content += `<hr/>Consumo Útil: ${usefulConsumption.toFixed(
-              2
-            )} ${unit}<br/>`;
-            content += `Eficiencia: ${efficiency.toFixed(1)}%`;
-          }
+        if (consumption > 0) {
+          const usefulConsumption = consumption - waterLoss;
+          const efficiency = (usefulConsumption / consumption) * 100;
+          content += `<hr/>Consumo Útil: ${usefulConsumption.toFixed(2)} ${unit}<br/>`;
+          content += `Eficiencia: ${efficiency.toFixed(1)}%`;
+        }
 
-          return content;
-        },
-        backgroundColor: "#fff",
-        borderColor: "#3b82f6",
-        borderWidth: 1,
-        textStyle: { color: "#111827" },
+        return content;
       },
-      grid: { top: "20%", left: "10%", right: "10%", bottom: "15%" },
-      xAxis: {
-        type: "category",
-        data: dateLabels,
-        axisLabel: { rotate: dateLabels.length > 20 ? 45 : 0, color: "#111827" },
+      backgroundColor: "#fff",
+      borderColor: "#3b82f6",
+      borderWidth: 1,
+      textStyle: { color: "#111827" },
+    },
+    grid: { top: "20%", left: "10%", right: "10%", bottom: "15%" },
+    xAxis: {
+      type: "category",
+      data: dateLabels,
+      axisLabel: { rotate: dateLabels.length > 20 ? 45 : 0, color: "#111827" },
+    },
+    yAxis: {
+      type: "value",
+      name: `Consumo (${unit})`,
+      axisLabel: { color: "#111827" },
+      nameTextStyle: { color: "#111827" },
+    },
+    toolbox: {
+      show: true,
+      feature: {
+        dataZoom: { yAxisIndex: "none" },
+        restore: {},
+        saveAsImage: {},
       },
-      yAxis: {
-        type: "value",
-        name: `Consumo (${unit})`,
-        axisLabel: { color: "#111827" },
-        nameTextStyle: { color: "#111827" },
+      iconStyle: { borderColor: "#111827" },
+    },
+    dataZoom: [{ type: "inside" }, { show: true, height: 30 }],
+    series: [
+      {
+        name: "Consumo",
+        type: chartType,
+        data: incrementalValues,
+        itemStyle: { color: "#3b82f6" },
+        lineStyle: { width: 2 },
       },
-      toolbox: {
-        show: true,
-        feature: {
-          dataZoom: { yAxisIndex: "none" },
-          restore: {},
-          saveAsImage: {},
-        },
-        iconStyle: { borderColor: "#111827" },
+      {
+        name: "Agua Perdida",
+        type: "line",
+        data: lossValues,
+        itemStyle: { color: "#dc2626" },
+        areaStyle: { color: "rgba(220, 38, 38, 0.3)" },
       },
-      dataZoom: [{ type: "inside" }, { show: true, height: 30 }],
-      series: [
-        {
-          name: "Consumo",
-          type: chartType, // Use selected type for consumption
-          data: incrementalValues,
-          itemStyle: { color: "#3b82f6" },
-          lineStyle: { width: 2 },
-        },
-        {
-          name: "Agua Perdida",
-          type: "line", // Keep loss as line
-          data: lossValues,
-          itemStyle: { color: "#dc2626" },
-          areaStyle: { color: "rgba(220, 38, 38, 0.3)" },
-        },
-      ],
-    };
-  }, [
-    waterLossStats,
-    analysisStats,
-    lossMode,
-    dateLabels,
-    unit,
-    incrementalValues,
-    lossValues,
-    chartType,
-  ]);
+    ],
+  }), [stats, lossMode, dateLabels, unit, incrementalValues, lossValues, chartType]);
 
   // In return, add simple selector for chart type above the chart
   return (
     <div className="space-y-6">
       {/* Controls Section */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        {/* Window Threshold Selector - Only show in rolling mode */}
+        {/* Window Threshold Input - Only show in rolling mode */}
         {lossMode === "rolling" && (
           <div className="flex items-center gap-3">
             <label className="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
-              Umbral de Ventana:
+              Ventana de Análisis (horas):
             </label>
-            <select
-              value={windowThreshold}
-              onChange={(e) => setWindowThreshold(Number(e.target.value))}
-              className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
-            >
-              <option value={3}>3 puntos (mínimo)</option>
-              <option value={5}>5 puntos</option>
-              <option value={7}>7 puntos (defecto)</option>
-              <option value={10}>10 puntos</option>
-              <option value={15}>15 puntos</option>
-              <option value={20}>20 puntos</option>
-            </select>
+            <input
+              type="number"
+              min={1}
+              max={720}
+              value={windowInput}
+              onChange={(e) => {
+                const value = e.target.value;
+                setWindowInput(value);
+
+                // Solo actualizar el threshold si es un número válido
+                if (value !== '') {
+                  const numValue = Number(value);
+                  if (!isNaN(numValue) && numValue >= 1) {
+                    setWindowThreshold(numValue);
+                  }
+                }
+              }}
+              onBlur={(e) => {
+                // Si está vacío o inválido al perder foco, restaurar valor por defecto
+                if (e.target.value === '' || Number(e.target.value) < 1) {
+                  setWindowInput("12");
+                  setWindowThreshold(12);
+                }
+              }}
+              onFocus={(e) => {
+                // Seleccionar todo el texto al hacer clic
+                e.target.select();
+              }}
+              className="w-24 px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Ej: 24"
+            />
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              (1-720h)
+            </span>
           </div>
         )}
-        
+
         {/* Chart Type Selector */}
         <div className="flex gap-2">
           <button
             onClick={() => setChartType("line")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              chartType === "line"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${chartType === "line"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+              }`}
           >
             Curva
           </button>
           <button
             onClick={() => setChartType("bar")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              chartType === "bar"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${chartType === "bar"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+              }`}
           >
             Barras
           </button>
@@ -561,21 +399,21 @@ export default function ChartXylem({
         className="rounded-lg shadow-sm"
       />
 
-      {/* Simplified Stats with improved legibility */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Consumo Total</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">
-            {analysisStats.totalConsumption.toLocaleString()} {unit}
+            {stats.totalConsumption.toLocaleString()} {unit}
           </p>
         </div>
         <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Pérdida de Agua</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{waterLossStats.lossPercentage}%</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.lossPercentage}%</p>
         </div>
         <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Eficiencia</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{analysisStats.efficiency}%</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.efficiency}%</p>
         </div>
       </div>
 
@@ -591,7 +429,7 @@ export default function ChartXylem({
         <PDFReportGenerator
           preparePDFData={preparePDFReportData}
           buttonText="Generar PDF"
-          filename={generateFilename()}  // Pass custom filename
+          filename={generateFilename()}
         />
       </div>
     </div>

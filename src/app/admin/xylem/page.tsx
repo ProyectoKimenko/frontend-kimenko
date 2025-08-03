@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import ChartXylem from "@/components/analysis/chartXylem";
 import {
@@ -37,170 +37,108 @@ type CellValue = string | number | Date | boolean;
 export default function XylemPage() {
     const [data, setData] = useState<ProcessedData | null>(null);
     const [filteredData, setFilteredData] = useState<ProcessedData | null>(null);
-    const [startDate, setStartDate] = useState<string>("");
-    const [endDate, setEndDate] = useState<string>("");
-    // Remove enableNightLoss, add lossMode
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [lossMode, setLossMode] = useState<'rolling' | 'night'>('rolling');
-    const [startHour, setStartHour] = useState<number>(22);
-    const [endHour, setEndHour] = useState<number>(6);
+    const [startHour, setStartHour] = useState(22);
+    const [endHour, setEndHour] = useState(6);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [dragActive, setDragActive] = useState(false);
+    const [minDate, setMinDate] = useState("");
+    const [maxDate, setMaxDate] = useState("");
 
-    // New: minDate and maxDate for clamping/filtering
-    const [minDate, setMinDate] = useState<string>("");
-    const [maxDate, setMaxDate] = useState<string>("");
+    const processExcelData = (workbook: XLSX.WorkBook): ProcessedData | null => {
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    const processExcelData = useCallback((workbook: XLSX.WorkBook): ProcessedData | null => {
-        try {
-            // Obtener la primera hoja
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-
-            // Convertir a JSON
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-            if (!jsonData || jsonData.length < 2) {
-                throw new Error("El archivo Excel debe tener al menos 2 filas (encabezados y datos)");
-            }
-
-            // Procesar los datos
-            const timeSeriesData: XylemData[] = [];
-
-            // Buscar las columnas importantes
-            const headers = (jsonData[0] as CellValue[])?.map(h => String(h).toLowerCase().trim()) || [];
-            const timestampCol = headers.findIndex(h =>
-                h.includes('fecha') || h.includes('date') || h.includes('timestamp') || h.includes('tiempo')
-            );
-            const valueCol = headers.findIndex(h =>
-                h.includes('valor') || h.includes('value') || h.includes('consumo') || h.includes('cantidad')
-            );
-            const unitCol = headers.findIndex(h =>
-                h.includes('unidad') || h.includes('unit') || h.includes('medida')
-            );
-
-            if (timestampCol === -1) {
-                throw new Error("No se encontró una columna de fecha/timestamp. Asegúrese de que exista una columna con 'fecha', 'date', 'timestamp' o 'tiempo'");
-            }
-
-            if (valueCol === -1) {
-                throw new Error("No se encontró una columna de valores. Asegúrese de que exista una columna con 'valor', 'value', 'consumo' o 'cantidad'");
-            }
-
-            // Procesar cada fila de datos
-            for (let i = 1; i < jsonData.length; i++) {
-                const row = jsonData[i] as CellValue[];
-
-                if (!row || row.length === 0) continue;
-
-                const timestampValue = row[timestampCol];
-                const valueValue = row[valueCol];
-                const unitValue = unitCol !== -1 ? row[unitCol] : "kWh"; // Valor por defecto
-
-                if (!timestampValue || (!valueValue && valueValue !== 0)) continue;
-
-                // Procesar timestamp
-                let timestamp: Date;
-                if (timestampValue instanceof Date) {
-                    timestamp = timestampValue;
-                } else if (typeof timestampValue === 'number') {
-                    // Excel serial date
-                    timestamp = new Date((timestampValue - 25569) * 86400 * 1000);
-                } else {
-                    // String timestamp
-                    timestamp = new Date(String(timestampValue));
-                    if (isNaN(timestamp.getTime())) {
-                        console.warn(`Fila ${i + 1}: Fecha inválida - ${timestampValue}`);
-                        continue;
-                    }
-                }
-
-                // Procesar valor
-                const numericValue = typeof valueValue === 'number' ? valueValue : parseFloat(String(valueValue));
-                if (isNaN(numericValue)) {
-                    console.warn(`Fila ${i + 1}: Valor numérico inválido - ${valueValue}`);
-                    continue;
-                }
-
-                timeSeriesData.push({
-                    timestamp: timestamp.getTime().toString(),
-                    valor: numericValue,
-                    unidad: String(unitValue || "kWh").trim()
-                });
-            }
-
-            if (timeSeriesData.length === 0) {
-                throw new Error("No se pudieron procesar datos válidos del archivo");
-            }
-
-            // Ordenar por timestamp
-            timeSeriesData.sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp));
-
-            // Crear metadata
-            const timestamps = timeSeriesData.map(d => parseInt(d.timestamp));
-            const startDate = new Date(Math.min(...timestamps));
-            const endDate = new Date(Math.max(...timestamps));
-
-            return {
-                time_series: timeSeriesData,
-                metadata: {
-                    filename: "archivo_cargado.xlsx",
-                    totalRecords: timeSeriesData.length,
-                    dateRange: {
-                        start: startDate.toISOString().slice(0, 10),
-                        end: endDate.toISOString().slice(0, 10)
-                    }
-                }
-            };
-
-        } catch (error) {
-            console.error("Error procesando Excel:", error);
-            throw error;
+        if (!jsonData || jsonData.length < 2) {
+            throw new Error("El archivo Excel debe tener al menos 2 filas (encabezados y datos)");
         }
-    }, []);
 
-    // Updated: clamp filters to minDate/maxDate
-    const applyFilters = useCallback(() => {
+        const headers = (jsonData[0] as CellValue[])?.map(h => String(h).toLowerCase().trim()) || [];
+        const timestampCol = headers.findIndex(h => ['fecha', 'date', 'timestamp', 'tiempo'].some(t => h.includes(t)));
+        const valueCol = headers.findIndex(h => ['valor', 'value', 'consumo', 'cantidad'].some(t => h.includes(t)));
+        const unitCol = headers.findIndex(h => ['unidad', 'unit', 'medida'].some(t => h.includes(t)));
+
+        if (timestampCol === -1) {
+            throw new Error("No se encontró una columna de fecha/timestamp");
+        }
+        if (valueCol === -1) {
+            throw new Error("No se encontró una columna de valores");
+        }
+
+        const timeSeriesData: XylemData[] = [];
+
+        for (let i = 1; i < jsonData.length; i++) {
+            const row = jsonData[i] as CellValue[];
+            if (!row?.length) continue;
+
+            const timestampValue = row[timestampCol];
+            const valueValue = row[valueCol];
+            const unitValue = unitCol !== -1 ? row[unitCol] : "kWh";
+
+            if (!timestampValue || (!valueValue && valueValue !== 0)) continue;
+
+            let timestamp: Date;
+            if (timestampValue instanceof Date) {
+                timestamp = timestampValue;
+            } else if (typeof timestampValue === 'number') {
+                timestamp = new Date((timestampValue - 25569) * 86400 * 1000);
+            } else {
+                timestamp = new Date(String(timestampValue));
+                if (isNaN(timestamp.getTime())) continue;
+            }
+
+            const numericValue = typeof valueValue === 'number' ? valueValue : parseFloat(String(valueValue));
+            if (isNaN(numericValue)) continue;
+
+            timeSeriesData.push({
+                timestamp: timestamp.getTime().toString(),
+                valor: numericValue,
+                unidad: String(unitValue || "kWh").trim()
+            });
+        }
+
+        if (timeSeriesData.length === 0) {
+            throw new Error("No se pudieron procesar datos válidos del archivo");
+        }
+
+        timeSeriesData.sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp));
+
+        const timestamps = timeSeriesData.map(d => parseInt(d.timestamp));
+        const startDate = new Date(Math.min(...timestamps));
+        const endDate = new Date(Math.max(...timestamps));
+
+        return {
+            time_series: timeSeriesData,
+            metadata: {
+                filename: "archivo_cargado.xlsx",
+                totalRecords: timeSeriesData.length,
+                dateRange: {
+                    start: startDate.toISOString().slice(0, 10),
+                    end: endDate.toISOString().slice(0, 10)
+                }
+            }
+        };
+    };
+
+    const applyFilters = () => {
         if (!data) return;
-
-        let filteredSeries = data.time_series;
-
-        // Use UTC consistently to avoid timezone offset issues
-        // Create dates at start of day in UTC
-        const minDateMs = minDate ? new Date(minDate + 'T00:00:00.000Z').getTime() : -Infinity;
-        const maxDateMs = maxDate ? new Date(maxDate + 'T23:59:59.999Z').getTime() : Infinity;
-
-        const start = startDate ? Math.max(minDateMs, new Date(startDate + 'T00:00:00.000Z').getTime()) : minDateMs;
-        const end = endDate ? Math.min(maxDateMs, new Date(endDate + 'T23:59:59.999Z').getTime()) : maxDateMs;
-
-        filteredSeries = filteredSeries.filter(item => {
-            const ts = parseInt(item.timestamp);
-            return ts >= start && ts <= end;
-        });
-
+        const start = startDate ? Date.parse(startDate) : -Infinity;
+        const end = endDate ? Date.parse(endDate) + 24 * 60 * 60 * 1000 - 1 : Infinity;
         setFilteredData({
             ...data,
-            time_series: filteredSeries
+            time_series: data.time_series.filter(item => {
+                const ts = Number(item.timestamp) - 4 * 60 * 60 * 1000;
+                return ts >= start && ts <= end + 10 * 60 * 1000;
+            })
         });
-    }, [data, startDate, endDate, minDate, maxDate]);
+    };
 
-    // Updated: set minDate/maxDate and default start/end on file upload
-    const handleFileUpload = useCallback(async (file: File) => {
-        if (!file) return;
-
-        // Validar tipo de archivo
-        const validTypes = [
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-excel',
-            '.xlsx',
-            '.xls'
-        ];
-
-        const isValidType = validTypes.some(type =>
-            file.type === type || file.name.toLowerCase().endsWith(type)
-        );
-
-        if (!isValidType) {
+    const handleFileUpload = async (file: File) => {
+        if (!file || !file.name.toLowerCase().match(/\.(xlsx|xls)$/)) {
             setError("Por favor, seleccione un archivo Excel válido (.xlsx o .xls)");
             return;
         }
@@ -211,7 +149,6 @@ export default function XylemPage() {
         try {
             const arrayBuffer = await file.arrayBuffer();
             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-
             const processedData = processExcelData(workbook);
 
             if (processedData) {
@@ -222,59 +159,35 @@ export default function XylemPage() {
                 setEndDate(processedData.metadata!.dateRange.end);
                 setMinDate(processedData.metadata!.dateRange.start);
                 setMaxDate(processedData.metadata!.dateRange.end);
-                setLossMode('rolling'); // Reset to 'rolling' on upload
+                setLossMode('rolling');
                 setStartHour(22);
                 setEndHour(6);
             }
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : "Error al procesar el archivo Excel";
-            setError(errorMessage);
+            setError(error instanceof Error ? error.message : "Error al procesar el archivo Excel");
             setData(null);
             setFilteredData(null);
         } finally {
             setLoading(false);
         }
-    }, [processExcelData]);
+    };
 
-    const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            handleFileUpload(file);
-        }
-    }, [handleFileUpload]);
-
-    const handleDrag = useCallback((e: React.DragEvent) => {
+    const handleDragEvents = (e: React.DragEvent, action: 'enter' | 'leave' | 'drop' | 'over') => {
         e.preventDefault();
         e.stopPropagation();
-    }, []);
 
-    const handleDragIn = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        if (action === 'enter' && e.dataTransfer.items?.length > 0) {
             setDragActive(true);
+        } else if (action === 'leave') {
+            setDragActive(false);
+        } else if (action === 'drop') {
+            setDragActive(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) handleFileUpload(file);
         }
-    }, []);
+    };
 
-    const handleDragOut = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(false);
-    }, []);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(false);
-
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const file = e.dataTransfer.files[0];
-            handleFileUpload(file);
-            e.dataTransfer.clearData();
-        }
-    }, [handleFileUpload]);
-
-    const clearData = useCallback(() => {
+    const clearData = () => {
         setData(null);
         setFilteredData(null);
         setError(null);
@@ -285,11 +198,11 @@ export default function XylemPage() {
         setLossMode('rolling');
         setStartHour(22);
         setEndHour(6);
-    }, []);
+    };
 
     useEffect(() => {
         applyFilters();
-    }, [startDate, endDate, applyFilters]);
+    }, [startDate, endDate, data]);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -331,15 +244,15 @@ export default function XylemPage() {
                                 ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
                                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                                 }`}
-                            onDragEnter={handleDragIn}
-                            onDragLeave={handleDragOut}
-                            onDragOver={handleDrag}
-                            onDrop={handleDrop}
+                            onDragEnter={(e) => handleDragEvents(e, 'enter')}
+                            onDragLeave={(e) => handleDragEvents(e, 'leave')}
+                            onDragOver={(e) => handleDragEvents(e, 'over')}
+                            onDrop={(e) => handleDragEvents(e, 'drop')}
                         >
                             <input
                                 type="file"
                                 accept=".xlsx,.xls"
-                                onChange={handleFileSelect}
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 disabled={loading}
                             />
@@ -387,49 +300,49 @@ export default function XylemPage() {
                     </div>
                 )}
 
-                {/* Data Info - Versión compacta */}
+                {/* File Info */}
                 {data?.metadata && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border mb-6">
+                    <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-200 dark:border-green-800 mb-6">
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="h-5 w-5 text-green-600" />
-                                    <span className="font-medium text-gray-900 dark:text-white">Archivo cargado</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">Archivo procesado exitosamente</span>
                                 </div>
                                 <button
                                     onClick={clearData}
-                                    className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-white/50 rounded-lg transition-colors border border-red-200 hover:border-red-300"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                     Limpiar
                                 </button>
                             </div>
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <span className="text-gray-500">Archivo:</span>
-                                    <p className="font-medium truncate">{data.metadata.filename}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded-lg">
+                                    <span className="text-gray-500 dark:text-gray-400">Archivo:</span>
+                                    <p className="font-medium text-gray-900 dark:text-white truncate">{data.metadata.filename}</p>
                                 </div>
-                                <div>
-                                    <span className="text-gray-500">Registros:</span>
-                                    <p className="font-medium">{data.metadata.totalRecords.toLocaleString()}</p>
+                                <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded-lg">
+                                    <span className="text-gray-500 dark:text-gray-400">Registros:</span>
+                                    <p className="font-medium text-gray-900 dark:text-white">{data.metadata.totalRecords.toLocaleString()}</p>
                                 </div>
-                                <div>
-                                    <span className="text-gray-500">Período:</span>
-                                    <p className="font-medium">{data.metadata.dateRange.start} - {data.metadata.dateRange.end}</p>
+                                <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded-lg">
+                                    <span className="text-gray-500 dark:text-gray-400">Período:</span>
+                                    <p className="font-medium text-gray-900 dark:text-white">{data.metadata.dateRange.start} - {data.metadata.dateRange.end}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Filtros de Análisis */}
+                {/* Analysis Filters */}
                 {data && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border mb-6 p-4">
-                        <h3 className="text-lg font-semibold mb-4">Filtros de Análisis</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border mb-6 p-6">
+                        <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Filtros de Análisis</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label className="flex items-center gap-2 mb-2 text-sm font-medium">
-                                    <Calendar className="h-4 w-4" />
+                                <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <Calendar className="h-4 w-4 text-blue-500" />
                                     Fecha Inicio
                                 </label>
                                 <input
@@ -438,12 +351,12 @@ export default function XylemPage() {
                                     min={minDate}
                                     max={maxDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full p-2 border rounded"
+                                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
                             <div>
-                                <label className="flex items-center gap-2 mb-2 text-sm font-medium">
-                                    <Calendar className="h-4 w-4" />
+                                <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <Calendar className="h-4 w-4 text-blue-500" />
                                     Fecha Fin
                                 </label>
                                 <input
@@ -452,51 +365,57 @@ export default function XylemPage() {
                                     min={minDate}
                                     max={maxDate}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full p-2 border rounded"
+                                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
                             <div>
-                                <label className="block mb-2 text-sm font-medium">Método de Cálculo de Pérdida</label>
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2">
+                                <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Método de Cálculo de Pérdida
+                                </label>
+                                <div className="space-y-3">
+                                    <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                         <input
                                             type="radio"
                                             checked={lossMode === 'rolling'}
                                             onChange={() => setLossMode('rolling')}
-                                            className="form-radio"
+                                            className="text-blue-600 focus:ring-blue-500"
                                         />
-                                        <span>Rolling Window</span>
+                                        <span className="text-gray-900 dark:text-white">Rolling Window</span>
                                     </label>
-                                    <label className="flex items-center gap-2">
+                                    <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                         <input
                                             type="radio"
                                             checked={lossMode === 'night'}
                                             onChange={() => setLossMode('night')}
-                                            className="form-radio"
+                                            className="text-blue-600 focus:ring-blue-500"
                                         />
-                                        <span>Modo Nocturno</span>
+                                        <span className="text-gray-900 dark:text-white">Modo Nocturno</span>
                                     </label>
                                 </div>
                                 {lossMode === 'night' && (
-                                    <div className="flex gap-2 mt-2">
+                                    <div className="grid grid-cols-2 gap-3 mt-4">
                                         <div>
-                                            <label className="text-sm">Hora Inicio</label>
+                                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                Hora Inicio
+                                            </label>
                                             <input
                                                 type="number"
                                                 min={0} max={23}
                                                 value={startHour}
                                                 onChange={(e) => setStartHour(Number(e.target.value))}
-                                                className="w-full p-2 border rounded"
+                                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-sm">Hora Fin</label>
+                                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                Hora Fin
+                                            </label>
                                             <input
                                                 type="number"
                                                 min={0} max={23}
                                                 value={endHour}
                                                 onChange={(e) => setEndHour(Number(e.target.value))}
-                                                className="w-full p-2 border rounded"
+                                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                                             />
                                         </div>
                                     </div>

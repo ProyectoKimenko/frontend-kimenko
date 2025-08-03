@@ -34,6 +34,23 @@ export default function PDFReportGenerator({
             const contentWidth = pageWidth - (margin * 2);
             const lineHeight = 5;
 
+            // Load logo
+            const loadLogo = (): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx?.drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = '/logo-kimenko.png';
+                });
+            };
+
             // Helper function to add wrapped text and handle page overflow
             const addWrappedText = (text: string, x: number, y: number, maxWidth: number): number => {
                 const lines = pdf.splitTextToSize(text, maxWidth);
@@ -80,15 +97,32 @@ export default function PDFReportGenerator({
             pdf.setFont("helvetica", "normal");
             pdf.setFontSize(10);
 
-            // Header on first page
+            // Logo y título a la misma altura
+            const headerY = 15;
+            let yPosition = headerY;
+            let logoWidth = 30;
+            let logoHeight = 15;
+            let logoX = margin;
+            try {
+                const logoDataUrl = await loadLogo();
+                pdf.addImage(logoDataUrl, "PNG", logoX, headerY, logoWidth, logoHeight);
+            } catch (error) {
+                console.warn("Could not load logo:", error);
+            }
+
+            // Header (título y subtítulo) alineado a la derecha del logo, centrado verticalmente con el logo
+            const titleX = pageWidth / 2;
+            const titleY = headerY + logoHeight / 2 + 1; // Centrado vertical con el logo
+
             pdf.setFontSize(16);
             pdf.setFont("helvetica", "bold");
-            pdf.text(data.title ?? '', pageWidth / 2, 15, { align: "center", maxWidth: contentWidth });
+            pdf.text(data.title ?? '', titleX, titleY, { align: "center", maxWidth: contentWidth });
+
             pdf.setFontSize(12);
             pdf.setFont("helvetica", "italic");
-            pdf.text(data.subtitle ?? '', pageWidth / 2, 22, { align: "center", maxWidth: contentWidth });
+            pdf.text(data.subtitle ?? '', titleX, titleY + 7, { align: "center", maxWidth: contentWidth });
 
-            let yPosition = 30;
+            yPosition = headerY + logoHeight + 15;
 
             // Metadata
             yPosition = addMetadata(data.metadata, yPosition);
@@ -139,7 +173,7 @@ export default function PDFReportGenerator({
 
             // Statistical Summary
             pdf.setFont("helvetica", "bold");
-            yPosition = addWrappedText("Resumen Estadístico", margin, yPosition, contentWidth);
+            // yPosition = addWrappedText("Resumen Estadístico", margin, yPosition, contentWidth);
             if (data.statisticalSummary) {
                 autoTable(pdf, {
                     startY: yPosition,
@@ -157,28 +191,29 @@ export default function PDFReportGenerator({
                 yPosition += lineHeight;
             }
 
+
             // Insights
-            yPosition = addInsights(data.insights, yPosition);
+            // yPosition = addInsights(data.insights, yPosition);
 
             // Projections
-            pdf.setFont("helvetica", "bold");
-            yPosition = addWrappedText("Proyecciones", margin, yPosition, contentWidth);
-            if (data.projections) {
-                autoTable(pdf, {
-                    startY: yPosition,
-                    head: [data.projections.headers ?? []],
-                    body: data.projections.rows ?? [],
-                    margin: { left: margin, right: margin },
-                    styles: { fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [0, 102, 204], textColor: 255 },
-                    alternateRowStyles: { fillColor: [240, 240, 240] },
-                });
-                // Avoid using 'any' by declaring a type for pdf with lastAutoTable property
-                type PDFWithAutoTable = typeof pdf & { lastAutoTable: { finalY: number } };
-                yPosition = (pdf as PDFWithAutoTable).lastAutoTable.finalY + lineHeight;
-            } else {
-                yPosition += lineHeight;
-            }
+            // pdf.setFont("helvetica", "bold");
+            // yPosition = addWrappedText("Proyecciones", margin, yPosition, contentWidth);
+            // if (data.projections) {
+            //     autoTable(pdf, {
+            //         startY: yPosition,
+            //         head: [data.projections.headers ?? []],
+            //         body: data.projections.rows ?? [],
+            //         margin: { left: margin, right: margin },
+            //         styles: { fontSize: 8, cellPadding: 2 },
+            //         headStyles: { fillColor: [0, 102, 204], textColor: 255 },
+            //         alternateRowStyles: { fillColor: [240, 240, 240] },
+            //     });
+            //     // Avoid using 'any' by declaring a type for pdf with lastAutoTable property
+            //     type PDFWithAutoTable = typeof pdf & { lastAutoTable: { finalY: number } };
+            //     yPosition = (pdf as PDFWithAutoTable).lastAutoTable.finalY + lineHeight;
+            // } else {
+            //     yPosition += lineHeight;
+            // }
 
             // Add Chart if available
             if (data.chartImage) {
@@ -204,7 +239,7 @@ export default function PDFReportGenerator({
                 // Chart header
                 pdf.setFontSize(14);
                 pdf.setFont("helvetica", "bold");
-                pdf.text("Gráfico de Análisis", pageWidth / 2, yPosition, { align: "center" });
+                // pdf.text("Gráfico de Análisis", pageWidth / 2, yPosition, { align: "center" });
                 yPosition += chartHeaderHeight;
 
                 // Add image centered
@@ -220,7 +255,7 @@ export default function PDFReportGenerator({
                 pdf.setTextColor(100);
                 pdf.text(`Página ${i} de ${pageCount}`, pageWidth - margin - 20, pageHeight - 10, { align: "right" });
                 pdf.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, margin, pageHeight - 10);
-                pdf.text("Kimenko - Análisis Profesional de Consumo", pageWidth / 2, pageHeight - 10, { align: "center" });
+                pdf.text("Kimenko: Gestión Eficiente de Agua", pageWidth / 2, pageHeight - 10, { align: "center" });
             }
 
             // Save PDF - Update to use custom filename
