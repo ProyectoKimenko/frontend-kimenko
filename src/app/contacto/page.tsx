@@ -169,8 +169,8 @@ export default function ContactoPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 shadow-xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Información de contacto */}
-            <div>
+            {/* Información de contacto - usar todo el contenedor por mientras */}
+            <div className="col-span-full">
               <h2 className="text-2xl font-bold text-white mb-6">
                 Información de contacto
               </h2>
@@ -234,7 +234,7 @@ export default function ContactoPage() {
             </div>
 
             {/* Formulario de contacto */}
-            <div>
+            {/* <div>
               <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
                 <h2 className="text-2xl font-bold text-white mb-6">
                   Envíanos un mensaje
@@ -325,7 +325,7 @@ export default function ContactoPage() {
                   </form>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
           </div>
         </div>

@@ -10,14 +10,14 @@ interface PDFReportGeneratorProps {
     options?: PDFReportOptions
     className?: string
     buttonText?: string
-    filename?: string  // Add filename prop
+    filename?: string
 }
 
 export default function PDFReportGenerator({
     preparePDFData,
     className = '',
     buttonText = 'Generar Reporte PDF',
-    filename  // Add filename to destructuring
+    filename
 }: PDFReportGeneratorProps) {
     const [isGenerating, setIsGenerating] = useState(false)
 
@@ -37,7 +37,7 @@ export default function PDFReportGenerator({
             // Load logo
             const loadLogo = (): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    const img = new Image();
+                    const img = new window.Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
@@ -55,7 +55,7 @@ export default function PDFReportGenerator({
             const addWrappedText = (text: string, x: number, y: number, maxWidth: number): number => {
                 const lines = pdf.splitTextToSize(text, maxWidth);
                 lines.forEach((line: string) => {
-                    if (y + lineHeight > pageHeight - margin - 10) { // Reserve space for footer
+                    if (y + lineHeight > pageHeight - margin - 10) {
                         pdf.addPage();
                         y = margin;
                     }
@@ -76,33 +76,18 @@ export default function PDFReportGenerator({
                         y = addWrappedText(`${key}: ${value}`, margin + 5, y, contentWidth - 5);
                     });
                 }
-                return y + lineHeight; // Extra spacing after section
+                return y + lineHeight;
             };
 
-            // Helper function for insights
-            const addInsights = (insights: string[] | undefined, startY: number): number => {
-                let y = startY;
-                pdf.setFont("helvetica", "bold");
-                y = addWrappedText("Insights", margin, y, contentWidth);
-                pdf.setFont("helvetica", "normal");
-                if (insights && insights.length > 0) {
-                    insights.forEach((insight) => {
-                        y = addWrappedText(`• ${insight}`, margin + 5, y, contentWidth - 5);
-                    });
-                }
-                return y + lineHeight; // Extra spacing after section
-            };
-
-            // Set professional font
             pdf.setFont("helvetica", "normal");
             pdf.setFontSize(10);
 
-            // Logo y título a la misma altura
+            // Header: logo and title at the same height
             const headerY = 15;
             let yPosition = headerY;
-            let logoWidth = 30;
-            let logoHeight = 15;
-            let logoX = margin;
+            const logoWidth = 30;
+            const logoHeight = 15;
+            const logoX = margin;
             try {
                 const logoDataUrl = await loadLogo();
                 pdf.addImage(logoDataUrl, "PNG", logoX, headerY, logoWidth, logoHeight);
@@ -110,9 +95,9 @@ export default function PDFReportGenerator({
                 console.warn("Could not load logo:", error);
             }
 
-            // Header (título y subtítulo) alineado a la derecha del logo, centrado verticalmente con el logo
+            // Title and subtitle aligned to the right of the logo, vertically centered with the logo
             const titleX = pageWidth / 2;
-            const titleY = headerY + logoHeight / 2 + 1; // Centrado vertical con el logo
+            const titleY = headerY + logoHeight / 2 + 1;
 
             pdf.setFontSize(16);
             pdf.setFont("helvetica", "bold");
@@ -151,7 +136,7 @@ export default function PDFReportGenerator({
                             Number(metric.color[2])
                         );
                     } else {
-                        pdf.setFillColor(0, 102, 204); // Default color
+                        pdf.setFillColor(0, 102, 204);
                     }
                     pdf.rect(x, y, metricWidth - 5, metricHeight, "F");
 
@@ -173,7 +158,6 @@ export default function PDFReportGenerator({
 
             // Statistical Summary
             pdf.setFont("helvetica", "bold");
-            // yPosition = addWrappedText("Resumen Estadístico", margin, yPosition, contentWidth);
             if (data.statisticalSummary) {
                 autoTable(pdf, {
                     startY: yPosition,
@@ -184,43 +168,18 @@ export default function PDFReportGenerator({
                     headStyles: { fillColor: [0, 102, 204], textColor: 255 },
                     alternateRowStyles: { fillColor: [240, 240, 240] },
                 });
-                // Avoid using 'any' by declaring a type for pdf with lastAutoTable property
                 type PDFWithAutoTable = typeof pdf & { lastAutoTable: { finalY: number } };
                 yPosition = (pdf as PDFWithAutoTable).lastAutoTable.finalY + lineHeight;
             } else {
                 yPosition += lineHeight;
             }
 
-
-            // Insights
-            // yPosition = addInsights(data.insights, yPosition);
-
-            // Projections
-            // pdf.setFont("helvetica", "bold");
-            // yPosition = addWrappedText("Proyecciones", margin, yPosition, contentWidth);
-            // if (data.projections) {
-            //     autoTable(pdf, {
-            //         startY: yPosition,
-            //         head: [data.projections.headers ?? []],
-            //         body: data.projections.rows ?? [],
-            //         margin: { left: margin, right: margin },
-            //         styles: { fontSize: 8, cellPadding: 2 },
-            //         headStyles: { fillColor: [0, 102, 204], textColor: 255 },
-            //         alternateRowStyles: { fillColor: [240, 240, 240] },
-            //     });
-            //     // Avoid using 'any' by declaring a type for pdf with lastAutoTable property
-            //     type PDFWithAutoTable = typeof pdf & { lastAutoTable: { finalY: number } };
-            //     yPosition = (pdf as PDFWithAutoTable).lastAutoTable.finalY + lineHeight;
-            // } else {
-            //     yPosition += lineHeight;
-            // }
-
             // Add Chart if available
             if (data.chartImage) {
                 const chartHeaderHeight = 10 + lineHeight;
-                const originalRatio = 16 / 9; // Assumed aspect ratio
+                const originalRatio = 16 / 9;
                 const maxWidth = contentWidth;
-                const maxHeight = pageHeight - margin - 20 - chartHeaderHeight; // Reserve for header and footer
+                const maxHeight = pageHeight - margin - 20 - chartHeaderHeight;
                 let imageWidth = maxWidth;
                 let imageHeight = imageWidth / originalRatio;
 
@@ -229,20 +188,16 @@ export default function PDFReportGenerator({
                     imageWidth = imageHeight * originalRatio;
                 }
 
-                // Check if fits on current page
                 const requiredHeight = chartHeaderHeight + imageHeight + 10;
                 if (yPosition + requiredHeight > pageHeight - margin - 10) {
                     pdf.addPage();
                     yPosition = margin;
                 }
 
-                // Chart header
                 pdf.setFontSize(14);
                 pdf.setFont("helvetica", "bold");
-                // pdf.text("Gráfico de Análisis", pageWidth / 2, yPosition, { align: "center" });
                 yPosition += chartHeaderHeight;
 
-                // Add image centered
                 const x = margin + (contentWidth - imageWidth) / 2;
                 pdf.addImage(data.chartImage, "PNG", x, yPosition, imageWidth, imageHeight);
             }
@@ -258,7 +213,6 @@ export default function PDFReportGenerator({
                 pdf.text("Kimenko: Gestión Eficiente de Agua", pageWidth / 2, pageHeight - 10, { align: "center" });
             }
 
-            // Save PDF - Update to use custom filename
             const defaultFilename = `reporte-analisis-${new Date().toISOString().slice(0, 10)}.pdf`;
             pdf.save(filename || defaultFilename);
 
@@ -267,7 +221,7 @@ export default function PDFReportGenerator({
         } finally {
             setIsGenerating(false);
         }
-    }, [preparePDFData, filename]);  // Add filename to dependencies
+    }, [preparePDFData, filename]);
 
     return (
         <button

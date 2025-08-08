@@ -199,10 +199,9 @@ export default function XylemPage() {
         setStartHour(22);
         setEndHour(6);
     };
-
     useEffect(() => {
         applyFilters();
-    }, [startDate, endDate, data]);
+    }, [startDate, endDate, data, applyFilters]);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

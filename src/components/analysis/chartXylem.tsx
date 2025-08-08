@@ -4,7 +4,6 @@ import PDFReportGenerator from "@/components/reports/PDFReportGenerator";
 import { Download } from "lucide-react";
 import type {
   XylemData,
-  XylemDataItem,
   TooltipParams,
 } from "@/types/components/analysis/typesXylem";
 import type { PDFReportData } from "../../types/components/reports/typesPDFReport";
