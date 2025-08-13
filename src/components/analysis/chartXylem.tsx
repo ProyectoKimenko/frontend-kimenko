@@ -100,7 +100,7 @@ export default function ChartXylem({
 
     return incrementalValues.map((val, idx) => {
       const timestamp = rawIncrementalData[idx].timestamp;
-      const hour = new Date(timestamp).getUTCHours();
+      const hour = new Date(timestamp).getHours();
       const isNightHour = startHour <= endHour
         ? hour >= startHour && hour < endHour
         : hour >= startHour || hour < endHour;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as XLSX from "xlsx";
 import ChartXylem from "@/components/analysis/chartXylem";
 import {
@@ -124,7 +124,7 @@ export default function XylemPage() {
         };
     };
 
-    const applyFilters = () => {
+    const applyFilters = useCallback(() => {
         if (!data) return;
         const start = startDate ? Date.parse(startDate) : -Infinity;
         const end = endDate ? Date.parse(endDate) + 24 * 60 * 60 * 1000 - 1 : Infinity;
@@ -135,7 +135,7 @@ export default function XylemPage() {
                 return ts >= start && ts <= end + 10 * 60 * 1000;
             })
         });
-    };
+    }, [data, startDate, endDate]);
 
     const handleFileUpload = async (file: File) => {
         if (!file || !file.name.toLowerCase().match(/\.(xlsx|xls)$/)) {
@@ -201,7 +201,7 @@ export default function XylemPage() {
     };
     useEffect(() => {
         applyFilters();
-    }, [startDate, endDate, data, applyFilters]);
+    }, [applyFilters]);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
