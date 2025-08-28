@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import Navbar from '@/components/Navbar'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   Gauge, 
@@ -36,96 +37,7 @@ export default function ProductoPage() {
         <div className="absolute inset-0 bg-black/50" />
       </div>
       {/* Header/Navbar */}
-      <header className="fixed top-0 w-full bg-black/20 backdrop-blur-md border-b border-white/10 z-50 relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="font-bold text-xl text-white hover:text-blue-300 transition-colors">
-              Kimenko
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              <Link href="/producto" className="text-blue-300 font-medium">
-                Producto
-              </Link>
-              <Link href="/nosotros" className="text-white/80 hover:text-white transition-colors font-medium">
-                Quiénes somos
-              </Link>
-              <Link href="/contacto" className="text-white/80 hover:text-white transition-colors font-medium">
-                Contacto
-              </Link>
-            </nav>
-
-            <div className="hidden md:block">
-              {isAuthenticated ? (
-                <Link href="/admin" className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium transition-all border border-white/20 hover:border-white/40">
-                  Ir al panel
-                </Link>
-              ) : (
-                <Link href="/login" className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-blue-500/25">
-                  Ingresar
-                </Link>
-              )}
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-white/10"
-            >
-              {isMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <nav className="md:hidden py-4 border-t border-white/10">
-              <div className="flex flex-col gap-3">
-                <Link 
-                  href="/producto" 
-                  className="text-blue-300 font-medium py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Producto
-                </Link>
-                <Link 
-                  href="/nosotros" 
-                  className="text-white/80 hover:text-white transition-colors font-medium py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Quiénes somos
-                </Link>
-                <Link 
-                  href="/contacto" 
-                  className="text-white/80 hover:text-white transition-colors font-medium py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Contacto
-                </Link>
-                <div className="pt-3 border-t border-white/10">
-                  {isAuthenticated ? (
-                    <Link 
-                      href="/admin" 
-                      className="block w-full text-center px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium transition-all border border-white/20 hover:border-white/40"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Ir al panel
-                    </Link>
-                  ) : (
-                    <Link 
-                      href="/login" 
-                      className="block w-full text-center px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-blue-500/25"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Ingresar
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </nav>
-          )}
-        </div>
-      </header>
+      <Navbar />
       
       {/* Hero Section */}
       <section className="pt-24 pb-12 relative z-10">
@@ -133,12 +45,11 @@ export default function ProductoPage() {
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 shadow-xl">
             <div className="max-w-3xl">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-                Kimenko: La plataforma completa para gestión del agua
+                Sistema Integral de gestión de agua
               </h1>
               <p className="text-xl text-gray-200 mb-8">
-                Unifica monitoreo, análisis y control en una sola herramienta. 
-                Visualiza KPIs en tiempo real, recibe alertas inteligentes y automatiza 
-                acciones para evitar pérdidas.
+                Unifica monitoreo, análisis y control en una sola herramienta. Implementación desde cero o adaptación de sistema
+                existente. Visualiza KPIs en tiempo real, recibe alertas y automatiza acciones para optimizar el uso del recurso hídrico
               </p>
               {isAuthenticated ? (
                 <Link 
@@ -150,10 +61,10 @@ export default function ProductoPage() {
                 </Link>
               ) : (
                 <Link 
-                  href="/login" 
+                  href="/contacto" 
                   className="inline-flex items-center px-8 py-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white font-semibold transition-all shadow-lg hover:shadow-xl"
                 >
-                  Prueba gratis
+                  Quiero saber más
                   <ArrowRight className="ml-2" size={20} />
                 </Link>
               )}
@@ -178,7 +89,7 @@ export default function ProductoPage() {
                 <h3 className="text-xl font-semibold mb-2 text-white">Dashboard en vivo</h3>
                 <p className="text-gray-200">
                   Monitorea caudal, consumo acumulado y tendencias con actualización 
-                  continua cada segundo.
+                  continua.
                 </p>
               </div>
 
@@ -188,8 +99,7 @@ export default function ProductoPage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Alertas inteligentes</h3>
                 <p className="text-gray-200">
-                  Define umbrales personalizados y recibe notificaciones por email 
-                  o SMS ante eventos críticos.
+                  Define umbrales personalizados y recibe notificaciones por email
                 </p>
               </div>
 
@@ -208,10 +118,10 @@ export default function ProductoPage() {
                 <div className="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mb-4">
                   <FileText className="text-orange-300" size={24} />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Reportes automáticos</h3>
+                <h3 className="text-xl font-semibold mb-2 text-white">Reportes ejecutivos</h3>
                 <p className="text-gray-300">
-                  Genera informes detallados en PDF o Excel con comparativos 
-                  históricos y métricas de ahorro.
+                  Genera informes ejecutivos con los principales indicadores de
+                  desempeño hídrico de tus instalaciones con un 'click'
                 </p>
               </div>
 
@@ -247,10 +157,10 @@ export default function ProductoPage() {
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 shadow-xl">
             <div className="max-w-3xl mx-auto text-center mb-12">
               <h2 className="text-3xl font-bold text-white mb-4">
-                Beneficios comprobados
+                Beneficios comprobados para cualquier tamaño de infraestructura
               </h2>
               <p className="text-lg text-gray-200">
-                Nuestros clientes reportan resultados tangibles desde el primer mes
+                Nuestros usuarios reportan resultados de ahorro desde el primer mes
               </p>
             </div>
 
@@ -259,10 +169,10 @@ export default function ProductoPage() {
               <CheckCircle className="text-green-400 flex-shrink-0 mt-1" size={24} />
               <div>
                 <h3 className="font-semibold text-white mb-1">
-                  Reducción del 30% en consumo
+                  Reducción de hasta 60% en consumo
                 </h3>
                 <p className="text-gray-300">
-                  Identifica y elimina fugas ocultas y desperdicios
+                  Identifica y elimina ineficiencias ocultas en la operación diaria
                 </p>
               </div>
             </div>
@@ -271,10 +181,10 @@ export default function ProductoPage() {
               <CheckCircle className="text-green-400 flex-shrink-0 mt-1" size={24} />
               <div>
                 <h3 className="font-semibold text-white mb-1">
-                  ROI en menos de 6 meses
+                  ROI desde 6 meses
                 </h3>
                 <p className="text-gray-300">
-                  El ahorro generado supera rápidamente la inversión
+                  En base a pérdidas descubiertas, el ahorro supera rápidamente la inversión
                 </p>
               </div>
             </div>
@@ -295,10 +205,10 @@ export default function ProductoPage() {
                 <CheckCircle className="text-green-300 flex-shrink-0 mt-1" size={24} />
                 <div>
                   <h3 className="font-semibold text-white mb-1">
-                    Decisiones basadas en datos
+                    Inversión eficiente en infraestructura
                   </h3>
                   <p className="text-gray-200">
-                    Métricas claras para optimizar procesos
+                    Refacciona o construye infraestructura con datos específicos de tu realidad hídrica para gasto mínimo de mantenimiento/reparaciones
                   </p>
                 </div>
               </div>
@@ -315,7 +225,7 @@ export default function ProductoPage() {
               Comienza a ahorrar agua y dinero hoy mismo
             </h2>
             <p className="text-xl text-gray-200 mb-8">
-              Únete a las empresas que ya están transformando su gestión del agua
+              Únete a las organizaciones que están transformando la gestión de uso del agua
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (
@@ -326,20 +236,12 @@ export default function ProductoPage() {
                   Ir al panel
                 </Link>
               ) : (
-                <>
-                  <Link 
-                    href="/login" 
-                    className="px-8 py-4 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 text-white font-semibold transition-all shadow-xl hover:shadow-2xl"
-                  >
-                    Comenzar prueba gratuita
-                  </Link>
-                  <Link 
-                    href="/contacto" 
-                    className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-semibold transition-all border border-white/20 hover:border-white/30 shadow-lg"
-                  >
-                    Solicitar demo
-                  </Link>
-                </>
+                <a
+                  href="/contacto"
+                  className="px-8 py-4 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 text-white font-semibold transition-all shadow-xl hover:shadow-2xl"
+                >
+                  Quiero saber más
+                </a>
               )}
             </div>
           </div>

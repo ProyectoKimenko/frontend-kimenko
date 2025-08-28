@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import Navbar from '@/components/Navbar'
 import { Target, Eye, Heart, Award, Clock, Lightbulb, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -25,96 +26,7 @@ export default function NosotrosPage() {
       </div>
       
       {/* Header/Navbar */}
-      <header className="fixed top-0 w-full bg-black/20 backdrop-blur-md border-b border-white/10 z-50 relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="font-bold text-xl text-white hover:text-blue-300 transition-colors">
-              Kimenko
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              <Link href="/producto" className="text-white/80 hover:text-white transition-colors font-medium">
-                Producto
-              </Link>
-              <Link href="/nosotros" className="text-white hover:text-white transition-colors font-medium">
-                Quiénes somos
-              </Link>
-              <Link href="/contacto" className="text-white/80 hover:text-white transition-colors font-medium">
-                Contacto
-              </Link>
-            </nav>
-
-            <div className="hidden md:block">
-              {isAuthenticated ? (
-                <Link href="/admin" className="px-6 py-2.5 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium transition-all border border-white/20 hover:border-white/40">
-                  Ir al panel
-                </Link>
-              ) : (
-                <Link href="/login" className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-blue-500/25">
-                  Ingresar
-                </Link>
-              )}
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-white/10"
-            >
-              {isMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <nav className="md:hidden py-4 border-t border-white/10">
-              <div className="flex flex-col gap-3">
-                <Link 
-                  href="/producto" 
-                  className="text-white/80 hover:text-white transition-colors font-medium py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Producto
-                </Link>
-                <Link 
-                  href="/nosotros" 
-                  className="text-white hover:text-white transition-colors font-medium py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Quiénes somos
-                </Link>
-                <Link 
-                  href="/contacto" 
-                  className="text-white/80 hover:text-white transition-colors font-medium py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Contacto
-                </Link>
-                <div className="pt-3 border-t border-white/10">
-                  {isAuthenticated ? (
-                    <Link 
-                      href="/admin" 
-                      className="block w-full text-center px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium transition-all border border-white/20 hover:border-white/40"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Ir al panel
-                    </Link>
-                  ) : (
-                    <Link 
-                      href="/login" 
-                      className="block w-full text-center px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium transition-all shadow-lg hover:shadow-blue-500/25"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Ingresar
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </nav>
-          )}
-        </div>
-      </header>
+      <Navbar />
       
       
       {/* Hero Section */}
@@ -123,15 +35,15 @@ export default function NosotrosPage() {
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 shadow-xl">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-                Kimenko
+                Kimenko, el conocimiento del agua
               </h1>
               <p className="text-xl text-gray-200 mb-8">
-                Transformamos la gestión del agua con tecnología inteligente desde 2016
+                Transformamos la gestión del agua con tecnología inteligente desde 2020
               </p>
               <p className="text-lg text-gray-300 max-w-3xl mx-auto">
-                Ayudamos a empresas e instituciones a optimizar su consumo de agua 
-                mediante soluciones IoT simples, confiables y medibles que generan 
-                ahorro real y contribuyen a la sostenibilidad ambiental.
+                Acercamos a las organizaciones herramientas digitales que les permita tener una nueva mirada sobre el uso diario
+                de agua en sus operaciones, mediante soluciones IoT amigables y confiables que generan ahorro real y contribuyen a la
+                sostenibilidad de sus actividades y del entorno
               </p>
             </div>
           </div>
@@ -149,9 +61,7 @@ export default function NosotrosPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Misión</h2>
                 <p className="text-gray-300 leading-relaxed">
-                  Hacer simple y accesible la gestión inteligente del agua, 
-                  proporcionando herramientas tecnológicas que generen ahorro 
-                  real y contribuyan a la sostenibilidad ambiental.
+                  Ayudar a masificar el acceso a soluciones que permitan optimizar el uso de un recurso escaso y vital, para la vida humana y el desarrollo de la economía, para contribuir a un uso consciente y aportar a la sostenibilidad del entorno.
                 </p>
               </div>
 
@@ -162,8 +72,8 @@ export default function NosotrosPage() {
                 <h2 className="text-2xl font-bold text-white mb-4">Visión</h2>
                 <p className="text-gray-300 leading-relaxed">
                   Ser líderes en Latinoamérica en soluciones de monitoreo 
-                  y gestión del agua, reconocidos por nuestra innovación, 
-                  simplicidad y el impacto positivo en nuestros clientes.
+                  y gestión del agua en infraestructuras, reconocidos por nuestra innovación, 
+                  simplicidad y el impacto positivo en nuestros usuarios.
                 </p>
               </div>
 
@@ -182,7 +92,8 @@ export default function NosotrosPage() {
           </div>
         </div>
       </section>
-      <section className="py-16 relative z-10">
+      {/* Nuestro Equipo */}
+      {/* <section className="py-16 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 shadow-xl">
             <h2 className="text-3xl font-bold text-center text-white mb-12">
@@ -190,7 +101,6 @@ export default function NosotrosPage() {
             </h2>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-              {/* Miguel Salazar */}
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg">
                 <div className="flex flex-col items-center text-center">
                   <div className="w-32 h-32 rounded-full overflow-hidden mb-6 ring-4 ring-white/10">
@@ -217,7 +127,6 @@ export default function NosotrosPage() {
                 </div>
               </div>
 
-              {/* Dan Simmons */}
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg">
                 <div className="flex flex-col items-center text-center">
                   <div className="w-32 h-32 rounded-full overflow-hidden mb-6 ring-4 ring-white/10">
@@ -245,7 +154,7 @@ export default function NosotrosPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Nuestra Experiencia - Condensado */}
       <section className="py-16 relative z-10">
@@ -261,10 +170,10 @@ export default function NosotrosPage() {
                   <Clock className="text-blue-300" size={28} />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">
-                  +8 años
+                  +5 años
                 </h3>
                 <p className="text-gray-300">
-                  Desarrollando soluciones IoT para monitoreo de agua
+                  Implementando soluciones IoT para monitoreo de agua
                 </p>
               </div>
 
@@ -289,6 +198,20 @@ export default function NosotrosPage() {
                 </h3>
                 <p className="text-gray-300">
                   Actualizaciones constantes con las últimas tecnologías
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+              <div className="text-center md:col-start-2">
+                <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Award className="text-yellow-300" size={28} />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Reconocimientos
+                </h3>
+                <p className="text-gray-300">
+                  Seleccionados por CORFO para implementación en entornos reales
                 </p>
               </div>
             </div>
