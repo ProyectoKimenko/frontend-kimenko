@@ -13,14 +13,12 @@ import {
   Cloud,
   CheckCircle,
   ArrowRight,
-  Menu,
-  X
 } from 'lucide-react'
-import { useState } from 'react'
+// import { useState } from 'react'
 
 export default function ProductoPage() {
   const { isAuthenticated } = useAuth()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  // const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-900 relative">
@@ -121,7 +119,7 @@ export default function ProductoPage() {
                 <h3 className="text-xl font-semibold mb-2 text-white">Reportes ejecutivos</h3>
                 <p className="text-gray-300">
                   Genera informes ejecutivos con los principales indicadores de
-                  desempeño hídrico de tus instalaciones con un 'click'
+                  desempeño hídrico de tus instalaciones con un click
                 </p>
               </div>
 

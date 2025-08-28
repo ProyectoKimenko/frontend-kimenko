@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
-import { Target, Eye, Heart, Award, Clock, Lightbulb, Menu, X } from 'lucide-react'
-import { useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { Target, Eye, Heart, Award, Clock, Lightbulb } from 'lucide-react'
+// import { useState } from 'react'
+// import { useAuth } from '@/hooks/useAuth'
 
 export default function NosotrosPage() {
-  const { isAuthenticated } = useAuth()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  // const { isAuthenticated } = useAuth()
+  // const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-900 relative">

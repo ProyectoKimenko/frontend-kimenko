@@ -1,47 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+// import { useState } from 'react'
+// import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
-import { Mail, Phone, MapPin, Menu, X } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { Mail, Phone, MapPin } from 'lucide-react'
+// import { useAuth } from '@/hooks/useAuth'
 
 export default function ContactoPage() {
-  const { isAuthenticated } = useAuth()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  // const [formData, setFormData] = useState({
-  //   nombre: '',
-  //   email: '',
-  //   empresa: '',
-  //   mensaje: ''
-  // })
-  // const [isSubmitted setIsSubmitted] = useState(false)
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault()
-  //   // Aquí iría la lógica para enviar el formulario
-  //   console.log('Formulario enviado:', formData)
-  //   setIsSubmitted(true)
-    
-  //   // Reset form después de 3 segundos
-  //   setTimeout(() => {
-  //     setIsSubmitted(false)
-  //     setFormData({
-  //       nombre: '',
-  //       email: '',
-  //       empresa: '',
-  //       mensaje: ''
-  //     })
-  //   }, 3000)
-  // }
-
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-  //   setFormData({
-  //     ...formData,
-  //     [e.target.name]: e.target.value
-  //   })
-  // }
+  // const { isAuthenticated } = useAuth()
+  // const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-900 relative">
