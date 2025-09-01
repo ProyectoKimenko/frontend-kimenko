@@ -32,7 +32,7 @@ export default function ProductoPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/75" />
       </div>
       {/* Header/Navbar */}
       <Navbar />
@@ -45,9 +45,9 @@ export default function ProductoPage() {
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
                 Sistema Integral de gestión de agua
               </h1>
-              <p className="text-xl text-gray-200 mb-8">
+              <p className="text-xl text-white mb-8">
                 Unifica monitoreo, análisis y control en una sola herramienta. Implementación desde cero o adaptación de sistema
-                existente. Visualiza KPIs en tiempo real, recibe alertas y automatiza acciones para optimizar el uso del recurso hídrico
+                existente. Visualiza KPIs en tiempo real, recibe alertas y automatiza acciones para optimizar el uso del recurso hídrico.
               </p>
               {isAuthenticated ? (
                 <Link 
@@ -85,7 +85,7 @@ export default function ProductoPage() {
                   <Gauge className="text-blue-200" size={24} />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Dashboard en vivo</h3>
-                <p className="text-gray-200">
+                <p className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                   Monitorea caudal, consumo acumulado y tendencias con actualización 
                   continua.
                 </p>
@@ -96,8 +96,8 @@ export default function ProductoPage() {
                   <Bell className="text-green-200" size={24} />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Alertas inteligentes</h3>
-                <p className="text-gray-200">
-                  Define umbrales personalizados y recibe notificaciones por email
+                <p className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  Define umbrales personalizados y recibe notificaciones por email.
                 </p>
               </div>
 
@@ -106,7 +106,7 @@ export default function ProductoPage() {
                   <TrendingUp className="text-purple-300" size={24} />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Análisis predictivo</h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Detecta patrones anómalos y predice posibles fugas antes de que 
                   se conviertan en pérdidas mayores.
                 </p>
@@ -117,9 +117,9 @@ export default function ProductoPage() {
                   <FileText className="text-orange-300" size={24} />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Reportes ejecutivos</h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Genera informes ejecutivos con los principales indicadores de
-                  desempeño hídrico de tus instalaciones con un click
+                  desempeño hídrico de tus instalaciones con un click.
                 </p>
               </div>
 
@@ -128,7 +128,7 @@ export default function ProductoPage() {
                   <Users className="text-red-300" size={24} />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Gestión multiusuario</h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Crea roles y permisos personalizados para diferentes áreas 
                   de tu organización.
                 </p>
@@ -139,7 +139,7 @@ export default function ProductoPage() {
                   <Cloud className="text-indigo-300" size={24} />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">API REST</h3>
-                <p className="text-gray-200">
+                <p className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                   Integra Kimenko con tus sistemas existentes mediante 
                   nuestra API documentada.
                 </p>
@@ -157,7 +157,7 @@ export default function ProductoPage() {
               <h2 className="text-3xl font-bold text-white mb-4">
                 Beneficios comprobados para cualquier tamaño de infraestructura
               </h2>
-              <p className="text-lg text-gray-200">
+              <p className="text-lg text-white">
                 Nuestros usuarios reportan resultados de ahorro desde el primer mes
               </p>
             </div>
@@ -169,7 +169,7 @@ export default function ProductoPage() {
                 <h3 className="font-semibold text-white mb-1">
                   Reducción de hasta 60% en consumo
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Identifica y elimina ineficiencias ocultas en la operación diaria
                 </p>
               </div>
@@ -181,7 +181,7 @@ export default function ProductoPage() {
                 <h3 className="font-semibold text-white mb-1">
                   ROI desde 6 meses
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   En base a pérdidas descubiertas, el ahorro supera rápidamente la inversión
                 </p>
               </div>
@@ -193,7 +193,7 @@ export default function ProductoPage() {
                 <h3 className="font-semibold text-white mb-1">
                   Cumplimiento normativo
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Reportes listos para auditorías y certificaciones
                 </p>
               </div>
@@ -205,8 +205,8 @@ export default function ProductoPage() {
                   <h3 className="font-semibold text-white mb-1">
                     Inversión eficiente en infraestructura
                   </h3>
-                  <p className="text-gray-200">
-                    Refacciona o construye infraestructura con datos específicos de tu realidad hídrica para gasto mínimo de mantenimiento/reparaciones
+                  <p className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                    Refacciona o construye infraestructura con datos específicos de tu realidad hídrica para gasto mínimo de mantenimiento/reparaciones.
                   </p>
                 </div>
               </div>
@@ -222,7 +222,7 @@ export default function ProductoPage() {
             <h2 className="text-3xl font-bold mb-4 text-white">
               Comienza a ahorrar agua y dinero hoy mismo
             </h2>
-            <p className="text-xl text-gray-200 mb-8">
+            <p className="text-xl text-white mb-8">
               Únete a las organizaciones que están transformando la gestión de uso del agua
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -247,7 +247,7 @@ export default function ProductoPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-black/50 backdrop-blur-sm border-t border-white/10 py-8 relative z-10">
+      <footer className="bg-black/75 backdrop-blur-sm border-t border-white/10 py-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <p className="text-gray-400">© {new Date().getFullYear()} Kimenko. Todos los derechos reservados.</p>
         </div>

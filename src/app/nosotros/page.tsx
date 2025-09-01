@@ -22,7 +22,7 @@ export default function NosotrosPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/75" />
       </div>
       
       {/* Header/Navbar */}
@@ -37,13 +37,13 @@ export default function NosotrosPage() {
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
                 Kimenko, el conocimiento del agua
               </h1>
-              <p className="text-xl text-gray-200 mb-8">
+              <p className="text-xl text-white mb-8">
                 Transformamos la gestión del agua con tecnología inteligente desde 2020
               </p>
-              <p className="text-lg text-gray-300 max-w-3xl mx-auto">
+              <p className="text-lg text-gray-100 max-w-3xl mx-auto">
                 Acercamos a las organizaciones herramientas digitales que les permita tener una nueva mirada sobre el uso diario
                 de agua en sus operaciones, mediante soluciones IoT amigables y confiables que generan ahorro real y contribuyen a la
-                sostenibilidad de sus actividades y del entorno
+                sostenibilidad de sus actividades y del entorno.
               </p>
             </div>
           </div>
@@ -60,17 +60,16 @@ export default function NosotrosPage() {
                   <Target className="text-blue-300" size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Misión</h2>
-                <p className="text-gray-300 leading-relaxed">
+                <p className="text-gray-100 leading-relaxed">
                   Ayudar a masificar el acceso a soluciones que permitan optimizar el uso de un recurso escaso y vital, para la vida humana y el desarrollo de la economía, para contribuir a un uso consciente y aportar a la sostenibilidad del entorno.
                 </p>
               </div>
-
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg">
                 <div className="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center mb-6">
                   <Eye className="text-green-300" size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Visión</h2>
-                <p className="text-gray-300 leading-relaxed">
+                <p className="text-gray-100 leading-relaxed">
                   Ser líderes en Latinoamérica en soluciones de monitoreo 
                   y gestión del agua en infraestructuras, reconocidos por nuestra innovación, 
                   simplicidad y el impacto positivo en nuestros usuarios.
@@ -82,7 +81,7 @@ export default function NosotrosPage() {
                   <Heart className="text-purple-300" size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Valores</h2>
-                <p className="text-gray-300 leading-relaxed">
+                <p className="text-gray-100 leading-relaxed">
                   Simplicidad en cada solución, compromiso con resultados 
                   medibles, innovación constante y responsabilidad con 
                   el medio ambiente y las futuras generaciones.
@@ -118,7 +117,7 @@ export default function NosotrosPage() {
                   <p className="text-blue-300 font-semibold mb-4">
                     Director Comercial & Fundador
                   </p>
-                  <p className="text-gray-300 leading-relaxed text-sm">
+                  <p className="text-gray-100 leading-relaxed text-sm">
                     Ingeniero Civil y MSc con experiencia en gestión de grandes proyectos 
                     en Chile. Postgrado en Innovación & Emprendimiento en Reino Unido y 
                     pasantía en CERN, Suiza. Lidera la transformación de la gestión de 
@@ -144,7 +143,7 @@ export default function NosotrosPage() {
                   <p className="text-blue-300 font-semibold mb-4">
                     CEO & Director en Quensus (Reino Unido)
                   </p>
-                  <p className="text-gray-300 leading-relaxed text-sm">
+                  <p className="text-gray-100 leading-relaxed text-sm">
                     MEng y PhD en Ingeniería Eléctrica y Electrónica. Fundador de 
                     empresa líder en smart water management en Reino Unido desde 2015. 
                     Impulsa la expansión en LATAM para conectar industria y sustentabilidad.
@@ -172,7 +171,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   +5 años
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Implementando soluciones IoT para monitoreo de agua
                 </p>
               </div>
@@ -184,7 +183,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   Tecnología validada
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Hardware y software probados en condiciones reales
                 </p>
               </div>
@@ -196,7 +195,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   Innovación continua
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Actualizaciones constantes con las últimas tecnologías
                 </p>
               </div>
@@ -210,7 +209,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   Reconocimientos
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-100">
                   Seleccionados por CORFO para implementación en entornos reales
                 </p>
               </div>
@@ -226,7 +225,7 @@ export default function NosotrosPage() {
             <h2 className="text-3xl font-bold text-white mb-6">
               ¿Listo para optimizar tu gestión del agua?
             </h2>
-            <p className="text-lg text-gray-200 mb-8">
+            <p className="text-lg text-white mb-8">
               Descubre cómo nuestras soluciones pueden generar ahorro real 
               y contribuir a la sostenibilidad de tu operación.
             </p>
@@ -240,7 +239,7 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <footer className="bg-black/50 backdrop-blur-sm border-t border-white/10 py-8 relative z-10">
+      <footer className="bg-black/75 backdrop-blur-sm border-t border-white/10 py-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <p className="text-gray-400">© {new Date().getFullYear()} Kimenko. Todos los derechos reservados.</p>
         </div>

@@ -4,7 +4,7 @@
 // import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
-import { Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, MapPin } from 'lucide-react'
 // import { useAuth } from '@/hooks/useAuth'
 
 export default function ContactoPage() {
@@ -23,7 +23,7 @@ export default function ContactoPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/75" />
       </div>
       {/* Header/Navbar */}
       <Navbar />
@@ -36,7 +36,7 @@ export default function ContactoPage() {
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
                 Hablemos sobre tu proyecto
               </h1>
-              <p className="text-xl text-gray-200">
+              <p className="text-xl text-white">
                 Estamos aquí para ayudarte a optimizar tu gestión del agua. 
                 Contáctanos y descubre cómo podemos trabajar juntos.
               </p>
@@ -54,7 +54,7 @@ export default function ContactoPage() {
               <h2 className="text-2xl font-bold text-white mb-6">
                 Información de contacto
               </h2>
-              <p className="text-gray-300 mb-8">
+              <p className="text-gray-100 mb-8">
                 Estamos disponibles para responder tus preguntas y ayudarte a 
                 encontrar la mejor solución para tu organización.
               </p>
@@ -72,7 +72,7 @@ export default function ContactoPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
+                {/* <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Phone className="text-green-300" size={24} />
                   </div>
@@ -82,7 +82,7 @@ export default function ContactoPage() {
                       +56 9 1234 5678
                     </a>
                   </div>
-                </div>
+                </div> */}
 
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -90,7 +90,7 @@ export default function ContactoPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white mb-1">Ubicación</h3>
-                    <p className="text-gray-300">Santiago, Chile</p>
+                    <p className="text-gray-100">Región Metropolitana y Región de Valparaíso</p>
                   </div>
                 </div>
               </div>
@@ -100,12 +100,12 @@ export default function ContactoPage() {
                 <h3 className="font-semibold text-white mb-3">
                   ¿Prefieres una reunión virtual?
                 </h3>
-                <p className="text-gray-300 mb-4">
+                <p className="text-gray-100 mb-4">
                   Podemos agendar una videollamada para conocer mejor tus necesidades 
                   y mostrarte una demo personalizada de nuestra plataforma.
                 </p>
                 <a 
-                  href="mailto:contacto@kimenko.cl?subject=Solicitud de demo" 
+                  href="mailto:contacto@kimenko.cl?subject=Solicitud de demo&body=Hola,%0D%0A%0D%0AEstoy interesado en una demo de Kimenko. ¿Podríamos agendar una reunión virtual?%0D%0A%0D%0AMi disponibilidad:%0D%0A- Lunes a Viernes: 9:00 - 18:00%0D%0A%0D%0AQuedo atento a tu respuesta.%0D%0A%0D%0ASaludos cordiales," 
                   className="inline-flex items-center text-blue-300 hover:text-blue-200 font-semibold"
                 >
                   Solicitar demo
@@ -224,7 +224,7 @@ export default function ContactoPage() {
               <h3 className="text-lg font-semibold text-white mb-2">
                 ¿Cuánto tiempo toma la implementación?
               </h3>
-              <p className="text-gray-300">
+              <p className="text-gray-100">
                 La instalación básica se realiza en 1-2 días. La configuración 
                 completa y personalización puede tomar hasta una semana, dependiendo 
                 de la complejidad del proyecto.
@@ -233,30 +233,32 @@ export default function ContactoPage() {
 
             <div className="border-b border-white/10 pb-6">
               <h3 className="text-lg font-semibold text-white mb-2">
-                ¿Ofrecen período de prueba?
+                ¿Qué tipo de soporte incluye?
               </h3>
-              <p className="text-gray-300">
-                Sí, ofrecemos 30 días de prueba gratuita para que puedas evaluar 
-                la plataforma y verificar los beneficios en tu operación.
+              <p className="text-gray-100">
+                Incluimos soporte técnico ilimitado por email, capacitación inicial 
+                para tu equipo y actualizaciones automáticas de la plataforma.
               </p>
             </div>
 
             <div className="border-b border-white/10 pb-6">
               <h3 className="text-lg font-semibold text-white mb-2">
-                ¿Qué tipo de soporte incluye?
+                ¿Cómo funciona la implementación?
               </h3>
-              <p className="text-gray-300">
-                Incluimos soporte técnico ilimitado por email, capacitación inicial 
-                para tu equipo y actualizaciones automáticas de la plataforma.
+              <p className="text-gray-100">
+                <span className="block mb-2">1. Sin sistema de monitoreo: Instalación de hardware en terreno + implementación de plataforma digital.</span>
+                <span className="block">2. Con sistema compatible: Desarrollo de integración de software + despliegue de nuestra plataforma digital.</span>
               </p>
             </div>
+
+            
           </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-black/50 backdrop-blur-sm border-t border-white/10 py-8 relative z-10">
+      <footer className="bg-black/75 backdrop-blur-sm border-t border-white/10 py-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <p className="text-gray-400">© {new Date().getFullYear()} Kimenko. Todos los derechos reservados.</p>
         </div>

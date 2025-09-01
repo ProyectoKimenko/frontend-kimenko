@@ -35,7 +35,7 @@
 
     //                 <div className="space-y-4">
     //                     <div>
-    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-100 mb-2">
     //                             Email
     //                         </label>
     //                         <input
@@ -47,7 +47,7 @@
     //                     </div>
 
     //                     <div>
-    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-100 mb-2">
     //                             Última conexión
     //                         </label>
     //                         <input
@@ -104,21 +104,21 @@
     //                 <div className="space-y-3">
     //                     <label className="flex items-center gap-3 cursor-pointer">
     //                         <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600" />
-    //                         <span className="text-sm text-gray-700 dark:text-gray-300">
+    //                         <span className="text-sm text-gray-700 dark:text-gray-100">
     //                             Alertas de análisis
     //                         </span>
     //                     </label>
 
     //                     <label className="flex items-center gap-3 cursor-pointer">
     //                         <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600" />
-    //                         <span className="text-sm text-gray-700 dark:text-gray-300">
+    //                         <span className="text-sm text-gray-700 dark:text-gray-100">
     //                             Reportes diarios
     //                         </span>
     //                     </label>
 
     //                     <label className="flex items-center gap-3 cursor-pointer">
     //                         <input type="checkbox" className="rounded border-gray-300 text-blue-600" />
-    //                         <span className="text-sm text-gray-700 dark:text-gray-300">
+    //                         <span className="text-sm text-gray-700 dark:text-gray-100">
     //                             Notificaciones push
     //                         </span>
     //                     </label>
@@ -136,7 +136,7 @@
 
     //                 <div className="space-y-3">
     //                     <div>
-    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-100 mb-2">
     //                             Tema
     //                         </label>
     //                         <select className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
@@ -147,7 +147,7 @@
     //                     </div>
 
     //                     <div>
-    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    //                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-100 mb-2">
     //                             Idioma
     //                         </label>
     //                         <select className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">

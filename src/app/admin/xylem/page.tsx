@@ -216,7 +216,7 @@ export default function XylemPage() {
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                                 Análisis de Datos Xylem
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-300">
+                            <p className="text-gray-600 dark:text-gray-100">
                                 Cargue un archivo Excel con datos de consumo para generar gráficos y análisis
                             </p>
                         </div>
@@ -340,7 +340,7 @@ export default function XylemPage() {
                         <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Filtros de Análisis</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-100">
                                     <Calendar className="h-4 w-4 text-blue-500" />
                                     Fecha Inicio
                                 </label>
@@ -354,7 +354,7 @@ export default function XylemPage() {
                                 />
                             </div>
                             <div>
-                                <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-100">
                                     <Calendar className="h-4 w-4 text-blue-500" />
                                     Fecha Fin
                                 </label>
@@ -368,7 +368,7 @@ export default function XylemPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-100">
                                     Método de Cálculo de Pérdida
                                 </label>
                                 <div className="space-y-3">

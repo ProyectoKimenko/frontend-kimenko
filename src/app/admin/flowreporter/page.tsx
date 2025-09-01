@@ -208,7 +208,7 @@ export default function FlowReporterAnalysis() {
                 ) : (
                     <div className="p-8 flex items-center justify-center h-[500px]">
                         <div className="text-center text-gray-500 dark:text-gray-400">
-                            <Droplets className="mx-auto h-16 w-16 mb-4 text-gray-300 dark:text-gray-600" />
+                            <Droplets className="mx-auto h-16 w-16 mb-4 text-gray-100 dark:text-gray-600" />
                             <h3 className="text-lg font-medium mb-2">Sin datos de análisis</h3>
                             <p className="text-sm">Configure los parámetros y ejecute el análisis para visualizar los resultados</p>
                         </div>

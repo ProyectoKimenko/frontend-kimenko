@@ -41,7 +41,7 @@ export default function Home() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/75" />
       </div>
       
       <Navbar />
@@ -54,15 +54,15 @@ export default function Home() {
               <span className="block text-blue-300">de agua</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-200 mb-8">
+            <p className="text-xl md:text-2xl text-white mb-8">
               Monitorea, analiza y controla el uso de agua de tus instalaciones en
               segundos.
-              Tecnología amigable para decisiones eficientes
+              Tecnología amigable para decisiones eficientes.
             </p>
 
             {/* Contador de agua ahorrada */}
             <div className="mb-8">
-              <p className="text-sm text-gray-300 mb-2">Agua ahorrada con Kimenko</p>
+              <p className="text-sm text-gray-100 mb-2">Agua ahorrada con Kimenko</p>
               <div className="text-4xl md:text-5xl font-bold text-blue-300 tabular-nums">
                 {waterSaved.toLocaleString('es-CL')}
                 <span className="text-2xl ml-2">L</span>
@@ -106,8 +106,8 @@ export default function Home() {
               <h2 className="text-3xl md:text-4xl font-bold text-white">
                 Todo lo que necesitas en un solo lugar
               </h2>
-              <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
-                Plataforma integral diseñada para informar consumos y pérdidas, simplificando la gestión del agua
+              <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto">
+                Plataforma integral diseñada para informar consumos y pérdidas, simplificando la gestión del agua.
               </p>
             </div>
 
@@ -119,7 +119,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-white mb-3">
                   Monitoreo en tiempo real
                 </h3>
-                <p className="text-gray-300 text-center">
+                <p className="text-gray-100 text-center">
                   Visualiza el consumo y detecta anomalías al instante con alertas automáticas.
                 </p>
               </div>
@@ -131,7 +131,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-white mb-3">
                   Análisis inteligente
                 </h3>
-                <p className="text-gray-300 text-center">
+                <p className="text-gray-100 text-center">
                   Reportes detallados y KPIs para tomar decisiones basadas en datos reales.
                 </p>
               </div>
@@ -143,8 +143,8 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-white mb-3">
                   Integración con sistemas existentes
                 </h3>
-                <p className="text-gray-300 text-center">
-                  Aporta valor a medidores inteligentes y sistemas de monitoreo con un asistente virtual que resumirá los indicadores claves de tus instalaciones
+                <p className="text-gray-100 text-center">
+                  Aporta valor a medidores inteligentes y sistemas de monitoreo con un asistente virtual que resumirá los indicadores claves de tus instalaciones.
                 </p>
               </div>
 
@@ -155,8 +155,8 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-white mb-3">
                   Control automático
                 </h3>
-                <p className="text-gray-300 text-center">
-                  Opción de configurar apertura/cierre de flujo de agua según necesidades
+                <p className="text-gray-100 text-center">
+                  Opción de configurar apertura/cierre de flujo de agua según necesidades.
                 </p>
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-white">
               Compatible con todo tipo de infraestructura
             </h2>
-            <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto">
               Si tu recinto tiene uso bajo o intensivo de agua por parte de sus usuarios, nuestra solución puede ayudarte
             </p>
           </div>
@@ -193,11 +193,11 @@ export default function Home() {
                   src="/infraestructura-comercial.png"
                   alt="Infraestructura habitacional y comercial"
                   fill
-                  className="object"
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white font-semibold text-center text-sm">Infraestructura habitacional y comercial</h3>
+                  <h3 className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-semibold text-center text-sm">Infraestructura habitacional y comercial</h3>
                 </div>
               </div>
             <div className="relative h-48 rounded-xl overflow-hidden group">
@@ -205,11 +205,11 @@ export default function Home() {
                 src="/restaurante.png"
                 alt="Restaurantes"
                 fill
-                className="object"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-white font-semibold text-center">Restaurantes</h3>
+                <h3 className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-semibold text-center">Restaurantes</h3>
               </div>
             </div>
 
@@ -218,11 +218,11 @@ export default function Home() {
                 src="/colegio.png"
                 alt="Colegios"
                 fill
-                className="object"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-white font-semibold text-center">Colegios</h3>
+                <h3 className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-semibold text-center">Colegios</h3>
               </div>
             </div>
 
@@ -231,11 +231,11 @@ export default function Home() {
                 src="/instalaciones-modulares.png"
                 alt="Instalaciones modulares"
                 fill
-                className="object"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-white font-semibold text-center text-sm">Instalaciones modulares</h3>
+                <h3 className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-semibold text-center text-sm">Instalaciones modulares</h3>
               </div>
             </div>
 
@@ -244,11 +244,11 @@ export default function Home() {
                 src="/hotel.png"
                 alt="Hoteles"
                 fill
-                className="object"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-white font-semibold text-center">Hoteles</h3>
+                <h3 className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-semibold text-center">Hoteles</h3>
               </div>
             </div>
           </div>
@@ -262,12 +262,26 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-white">
               Confían en nosotros
             </h2>
-            <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
-              Empresas líderes que ya están transformando su gestión del agua
+            <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto">
+              Organizaciones que ya están ahorrando agua con nosotros
             </p>
           </div>
 
           <div className="flex justify-center items-center gap-12">
+            <Image
+              src="/logo-parque-farellones.png"
+              alt="parque-farellones"
+              width={140}
+              height={70}
+              className="object-contain"
+            />
+            <Image
+              src="/logo-velluga.png"
+              alt="velluga"
+              width={140}
+              height={70}
+              className="object-contain"
+            />
             <Image
               src="/logo-corfo.png"
               alt="Corfo"
@@ -289,16 +303,30 @@ export default function Home() {
               height={70}
               className="object-contain"
             />
+            <Image
+              src="/logo-andacor.png"
+              alt="andacor"
+              width={140}
+              height={70}
+              className="object-contain"
+            />
+            <Image
+              src="/logo-colegio-farellones.png"
+              alt="colegio-farellones"
+              width={140}
+              height={70}
+              className="object-contain"
+            />
           </div>
         </div>
       </section>
 
-      <footer className="bg-black/50 backdrop-blur-sm border-t border-white/10 py-12 relative z-10">
+      <footer className="bg-black/75 backdrop-blur-sm border-t border-white/10 py-12 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0">
-              <p className="text-2xl font-bold mb-2 text-white">Kimenko</p>
-              <p className="text-gray-400">Gestión inteligente del agua</p>
+            <div className="mb-6 md:mb-0 flex items-center gap-4">
+              <Image src="/logo-kimenko-blanco.png" alt="Kimenko" width={140} height={140} />
+              <p className="text-gray-400">Gestión Inteligente de Agua</p>
             </div>
             <div className="flex gap-6">
               <Link href="/producto" className="text-gray-400 hover:text-white transition-colors">

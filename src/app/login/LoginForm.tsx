@@ -109,7 +109,7 @@ export default function LoginForm() {
                         <div>
                             <label
                                 htmlFor="email"
-                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-100 mb-2"
                             >
                                 Correo electrónico
                             </label>
@@ -128,7 +128,7 @@ export default function LoginForm() {
                         <div>
                             <label
                                 htmlFor="password"
-                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-100 mb-2"
                             >
                                 Contraseña
                             </label>
@@ -147,7 +147,7 @@ export default function LoginForm() {
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     disabled={loading}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {showPassword ? (
                                         <EyeOff className="h-5 w-5" />
