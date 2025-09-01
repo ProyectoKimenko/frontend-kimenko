@@ -267,56 +267,70 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex justify-center items-center gap-12">
-            <Image
-              src="/logo-parque-farellones.png"
-              alt="parque-farellones"
-              width={140}
-              height={70}
-              className="object-contain"
-            />
-            <Image
-              src="/logo-velluga.png"
-              alt="velluga"
-              width={140}
-              height={70}
-              className="object-contain"
-            />
-            <Image
-              src="/logo-corfo.png"
-              alt="Corfo"
-              width={140}
-              height={70}
-              className="object-contain"
-            />
-            <Image
-              src="/caf.png"
-              alt="caf"
-              width={140}
-              height={70}
-              className="object-contain"
-            />
-            <Image
-              src="/aleman-farellones.png"
-              alt="aleman-farellones"
-              width={140}
-              height={70}
-              className="object-contain"
-            />
-            <Image
-              src="/logo-andacor.png"
-              alt="andacor"
-              width={140}
-              height={70}
-              className="object-contain"
-            />
-            <Image
-              src="/logo-colegio-farellones.png"
-              alt="colegio-farellones"
-              width={140}
-              height={70}
-              className="object-contain"
-            />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-8 sm:gap-12 md:gap-16 lg:gap-8 items-center justify-items-center">
+            <div className="flex items-center justify-center h-20 sm:h-24 p-2 lg:p-1">
+              <Image
+                src="/logo-parque-farellones.png"
+                alt="parque-farellones"
+                width={120}
+                height={60}
+                className="object-contain max-w-full h-auto"
+              />
+            </div>
+            <div className="flex items-center justify-center h-20 sm:h-24 p-2 lg:p-1">
+              <Image
+                src="/logo-velluga.png"
+                alt="velluga"
+                width={120}
+                height={60}
+                className="object-contain max-w-full h-auto"
+              />
+            </div>
+            <div className="flex items-center justify-center h-20 sm:h-24 p-2 lg:p-1">
+              <Image
+                src="/logo-corfo.png"
+                alt="Corfo"
+                width={120}
+                height={60}
+                className="object-contain max-w-full h-auto"
+              />
+            </div>
+            <div className="flex items-center justify-center h-20 sm:h-24 p-2 lg:p-1">
+              <Image
+                src="/caf.png"
+                alt="caf"
+                width={120}
+                height={60}
+                className="object-contain max-w-full h-auto"
+              />
+            </div>
+            <div className="flex items-center justify-center h-20 sm:h-24 p-2 lg:p-1">
+              <Image
+                src="/aleman-farellones.png"
+                alt="aleman-farellones"
+                width={120}
+                height={60}
+                className="object-contain max-w-full h-auto"
+              />
+            </div>
+            <div className="flex items-center justify-center h-20 sm:h-24 p-2 lg:p-1">
+              <Image
+                src="/logo-andacor.png"
+                alt="andacor"
+                width={120}
+                height={60}
+                className="object-contain max-w-full h-auto"
+              />
+            </div>
+            <div className="flex items-center justify-center h-20 sm:h-24 p-2 lg:p-1">
+              <Image
+                src="/logo-colegio-farellones.png"
+                alt="colegio-farellones"
+                width={120}
+                height={60}
+                className="object-contain max-w-full h-auto"
+              />
+            </div>
           </div>
         </div>
       </section>
