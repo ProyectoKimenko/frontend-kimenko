@@ -1,12 +1,15 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import ReactECharts from "echarts-for-react";
 import PDFReportGenerator from "@/components/reports/PDFReportGenerator";
-import { Download } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import type {
   XylemData,
   TooltipParams,
+  ChartNote,
 } from "@/types/components/analysis/typesXylem";
 import type { PDFReportData } from "../../types/components/reports/typesPDFReport";
+import NoteModal from "./NoteModal";
+import NotesList from "./NotesList";
 
 interface ChartXylemProps {
   data: XylemData;
@@ -26,8 +29,65 @@ export default function ChartXylem({
   const [windowInput, setWindowInput] = useState("12");
   const chartRef = useRef<ReactECharts>(null);
 
+  // Notes state
+  const [notes, setNotes] = useState<ChartNote[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<ChartNote | undefined>();
+  const [selectedDate, setSelectedDate] = useState<string>("");
+
   const filteredData = data?.time_series || [];
   const unit = filteredData[0]?.unidad || "kWh";
+
+  // Notes CRUD functions
+  const handleSaveNote = (noteData: Omit<ChartNote, "id" | "createdAt">) => {
+    if (selectedNote) {
+      // Edit existing note
+      setNotes(notes.map(n =>
+        n.id === selectedNote.id
+          ? { ...selectedNote, ...noteData }
+          : n
+      ));
+    } else {
+      // Create new note
+      const newNote: ChartNote = {
+        ...noteData,
+        id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date().toISOString(),
+      };
+      setNotes([...notes, newNote]);
+    }
+    setSelectedNote(undefined);
+  };
+
+  const handleEditNote = (note: ChartNote) => {
+    setSelectedNote(note);
+    setSelectedDate(note.timestamp);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    setNotes(notes.filter(n => n.id !== noteId));
+  };
+
+  const handleAddNote = (date?: string) => {
+    setSelectedNote(undefined);
+    // If no date provided, use the first date from the data range
+    if (!date && filteredData.length > 0) {
+      const firstTimestamp = filteredData[0].timestamp;
+      setSelectedDate(new Date(parseInt(firstTimestamp)).toISOString());
+    } else {
+      setSelectedDate(date || new Date().toISOString());
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleChartClick = (params: { dataIndex: number }) => {
+    if (params.dataIndex !== undefined && rawIncrementalData[params.dataIndex]) {
+      const clickedTimestamp = rawIncrementalData[params.dataIndex].timestamp;
+      const dateISO = new Date(clickedTimestamp).toISOString();
+      handleAddNote(dateISO);
+    }
+  };
 
   // Sincronizar windowInput con windowThreshold cuando cambie externamente
   useEffect(() => {
@@ -200,6 +260,27 @@ export default function ChartXylem({
       insights.push(`Eficiencia del ${stats.efficiency}% indica oportunidades de mejora.`);
     }
 
+    // Add notes to insights if any
+    if (notes.length > 0) {
+      insights.push(`Se han registrado ${notes.length} nota${notes.length > 1 ? 's' : ''} durante el análisis.`);
+    }
+
+    // Prepare notes section for PDF
+    const notesSection = notes.length > 0 ? {
+      headers: ["Fecha", "Título", "Descripción"],
+      rows: notes
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .map(note => [
+          new Date(note.timestamp).toLocaleDateString("es-ES", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+          note.title,
+          note.description || "-",
+        ]),
+    } : undefined;
+
     return {
       title: "Análisis de Consumo de Agua",
       metadata: {
@@ -233,6 +314,7 @@ export default function ChartXylem({
       },
       chartImage: chartImage || undefined,
       insights: insights.slice(0, 3),
+      recommendations: notesSection,
     };
   };
 
@@ -241,6 +323,84 @@ export default function ChartXylem({
     const currentDate = new Date().toISOString().slice(0, 10);
     return `reporte-${baseFilename}-${currentDate}.pdf`;
   };
+
+  // Prepare note markers and lines for chart
+  const noteMarkers = useMemo(() => {
+    if (notes.length === 0 || rawIncrementalData.length === 0) return { points: [], lines: [] };
+
+    const points = notes.map(note => {
+      // Find the closest data point to this note's timestamp
+      const noteTimestamp = new Date(note.timestamp).getTime();
+      const noteDateOnly = new Date(note.timestamp).toLocaleDateString("es-ES");
+
+      // Find the index of the closest timestamp on the same day
+      let closestIndex = -1;
+      let minDiff = Infinity;
+
+      rawIncrementalData.forEach((item, idx) => {
+        const itemDateOnly = new Date(item.timestamp).toLocaleDateString("es-ES");
+
+        // Only consider points from the same day
+        if (itemDateOnly === noteDateOnly) {
+          const diff = Math.abs(item.timestamp - noteTimestamp);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = idx;
+          }
+        }
+      });
+
+      // If no match on same day, find closest overall
+      if (closestIndex === -1) {
+        rawIncrementalData.forEach((item, idx) => {
+          const diff = Math.abs(item.timestamp - noteTimestamp);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = idx;
+          }
+        });
+      }
+
+      if (closestIndex === -1) return null;
+
+      return {
+        name: note.title,
+        xAxis: dateLabels[closestIndex],
+        yAxis: incrementalValues[closestIndex],
+        value: note.title,
+        itemStyle: {
+          color: note.color,
+          borderColor: '#fff',
+          borderWidth: 1,
+        },
+        label: {
+          show: true,
+          formatter: note.title,
+          position: 'top',
+          fontSize: 9,
+          color: '#111827',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: note.color,
+          borderWidth: 1,
+          padding: [3, 7],
+          borderRadius: 3,
+          distance: 20,
+        },
+        labelLine: {
+          show: true,
+          length: 15,
+          length2: 5,
+          lineStyle: {
+            color: note.color,
+            width: 1,
+            type: 'solid',
+          },
+        },
+      };
+    }).filter(Boolean);
+
+    return { points };
+  }, [notes, rawIncrementalData, incrementalValues, dateLabels]);
 
   const chartConfiguration = useMemo(() => ({
     backgroundColor: "#ffffff",
@@ -257,6 +417,7 @@ export default function ChartXylem({
       trigger: "axis",
       formatter: (params: TooltipParams[]) => {
         const date = params[0]?.axisValue;
+        const dataIndex = params[0]?.dataIndex;
         let content = `<strong>${date}</strong><br/>`;
 
         const consumption = params.find(p => p.seriesName === "Consumo")?.data as number || 0;
@@ -270,6 +431,29 @@ export default function ChartXylem({
           const efficiency = (usefulConsumption / consumption) * 100;
           content += `<hr/>Consumo Útil: ${usefulConsumption.toFixed(2)} ${unit}<br/>`;
           content += `Eficiencia: ${efficiency.toFixed(1)}%`;
+        }
+
+        // Show notes for this date if any
+        if (dataIndex !== undefined && rawIncrementalData[dataIndex]) {
+          const pointTimestamp = rawIncrementalData[dataIndex].timestamp;
+          const pointDateOnly = new Date(pointTimestamp).toLocaleDateString("es-ES");
+
+          const notesForThisDate = notes.filter(note => {
+            const noteDateOnly = new Date(note.timestamp).toLocaleDateString("es-ES");
+            return noteDateOnly === pointDateOnly;
+          });
+
+          if (notesForThisDate.length > 0) {
+            content += `<hr/><strong>📝 Notas (${notesForThisDate.length}):</strong><br/>`;
+            notesForThisDate.forEach(note => {
+              content += `<div style="margin-top:4px;padding:4px;background:${note.color}20;border-left:3px solid ${note.color}">
+                <strong>${note.title}</strong>`;
+              if (note.description) {
+                content += `<br/><span style="font-size:11px">${note.description}</span>`;
+              }
+              content += `</div>`;
+            });
+          }
         }
 
         return content;
@@ -308,6 +492,11 @@ export default function ChartXylem({
         data: incrementalValues,
         itemStyle: { color: "#3b82f6" },
         lineStyle: { width: 2 },
+        markPoint: noteMarkers.points.length > 0 ? {
+          data: noteMarkers.points,
+          symbol: 'circle',
+          symbolSize: 12,
+        } : undefined,
       },
       {
         name: "Agua Perdida",
@@ -317,7 +506,7 @@ export default function ChartXylem({
         areaStyle: { color: "rgba(220, 38, 38, 0.3)" },
       },
     ],
-  }), [stats, lossMode, dateLabels, unit, incrementalValues, lossValues, chartType]);
+  }), [stats, lossMode, dateLabels, unit, incrementalValues, lossValues, chartType, windowThreshold, noteMarkers, notes, rawIncrementalData]);
 
   // In return, add simple selector for chart type above the chart
   return (
@@ -396,6 +585,9 @@ export default function ChartXylem({
         option={chartConfiguration}
         style={{ height: "500px" }}
         className="rounded-lg shadow-sm"
+        onEvents={{
+          click: handleChartClick,
+        }}
       />
 
       {/* Stats Cards */}
@@ -416,6 +608,27 @@ export default function ChartXylem({
         </div>
       </div>
 
+      {/* Notes Section */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Notas del Análisis
+          </h3>
+          <button
+            onClick={() => handleAddNote()}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            <Plus size={16} />
+            Agregar Nota
+          </button>
+        </div>
+        <NotesList
+          notes={notes}
+          onEdit={handleEditNote}
+          onDelete={handleDeleteNote}
+        />
+      </div>
+
       <div className="flex gap-4">
         <button
           onClick={exportCSV}
@@ -431,6 +644,26 @@ export default function ChartXylem({
           filename={generateFilename()}
         />
       </div>
+
+      {/* Note Modal */}
+      <NoteModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedNote(undefined);
+        }}
+        onSave={handleSaveNote}
+        selectedDate={selectedDate}
+        note={selectedNote}
+        dateRange={
+          filteredData.length > 0
+            ? {
+                min: filteredData[0].timestamp,
+                max: filteredData[filteredData.length - 1].timestamp,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

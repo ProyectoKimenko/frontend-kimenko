@@ -49,3 +49,12 @@ export interface DateRange {
     start: Date | null;
     end: Date | null;
 }
+
+export interface ChartNote {
+    id: string;
+    timestamp: string; // ISO date string
+    title: string;
+    description?: string;
+    color: string; // Hex color code
+    createdAt: string; // ISO date string
+}

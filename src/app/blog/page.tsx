@@ -24,7 +24,7 @@ export default async function BlogPage() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight">
            Noticias de Kimenko
           </h1>
-          <p className="text-gray-100 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed px-4">
+          <p className="text-gray-300 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed px-4">
            Artículos compartidos en nuestras redes sociales sobre nuestras implementaciones, colaboraciones, reconocimientos e impacto logrado.
           </p>
           <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto mt-6 sm:mt-8 rounded-full"></div>
@@ -80,7 +80,7 @@ export default async function BlogPage() {
                         </span>
                       )}
                       {post.author && (
-                        <span className="text-gray-500 hidden sm:inline">Por {post.author}</span>
+                        <span className="text-gray-400 hidden sm:inline">Por {post.author}</span>
                       )}
                     </div>
 
@@ -91,7 +91,7 @@ export default async function BlogPage() {
                     </h2>
 
                     {post.excerpt && (
-                      <p className="text-gray-100 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base md:text-lg">
+                      <p className="text-gray-300 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base md:text-lg">
                         {post.excerpt}
                       </p>
                     )}

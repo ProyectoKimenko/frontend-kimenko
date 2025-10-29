@@ -57,7 +57,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </h1>
 
             {post.excerpt && (
-              <p className="text-lg sm:text-xl md:text-2xl text-gray-100 leading-7 sm:leading-8 md:leading-9 mb-8 sm:mb-12 max-w-5xl">
+              <p className="text-lg sm:text-xl md:text-2xl text-gray-300 leading-7 sm:leading-8 md:leading-9 mb-8 sm:mb-12 max-w-5xl">
                 {post.excerpt}
               </p>
             )}
@@ -156,22 +156,22 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12 mb-8 sm:mb-12">
             <div className="sm:col-span-2 md:col-span-1">
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Kimenko</h3>
-              <p className="text-gray-100 leading-relaxed text-sm sm:text-base">
+              <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
                 Especialistas en gestión inteligente del agua y análisis de datos para optimizar recursos hídricos.
               </p>
             </div>
             <div>
               <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Enlaces</h4>
               <div className="space-y-2">
-                <Link href="/" className="block text-gray-100 hover:text-blue-300 transition-colors text-sm sm:text-base">Inicio</Link>
-                <Link href="/producto" className="block text-gray-100 hover:text-blue-300 transition-colors text-sm sm:text-base">Producto</Link>
-                <Link href="/nosotros" className="block text-gray-100 hover:text-blue-300 transition-colors text-sm sm:text-base">Nosotros</Link>
-                <Link href="/contacto" className="block text-gray-100 hover:text-blue-300 transition-colors text-sm sm:text-base">Contacto</Link>
+                <Link href="/" className="block text-gray-300 hover:text-blue-300 transition-colors text-sm sm:text-base">Inicio</Link>
+                <Link href="/producto" className="block text-gray-300 hover:text-blue-300 transition-colors text-sm sm:text-base">Producto</Link>
+                <Link href="/nosotros" className="block text-gray-300 hover:text-blue-300 transition-colors text-sm sm:text-base">Nosotros</Link>
+                <Link href="/contacto" className="block text-gray-300 hover:text-blue-300 transition-colors text-sm sm:text-base">Contacto</Link>
               </div>
             </div>
             <div>
               <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Blog</h4>
-              <p className="text-gray-100 leading-relaxed text-sm sm:text-base">
+              <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
                 Mantente al día con las últimas tendencias en tecnología del agua y gestión sostenible de recursos.
               </p>
             </div>
