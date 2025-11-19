@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import ReactECharts from "echarts-for-react";
 import PDFReportGenerator from "@/components/reports/PDFReportGenerator";
 import { Download, Plus } from "lucide-react";
@@ -35,7 +35,7 @@ export default function ChartXylem({
   const [selectedNote, setSelectedNote] = useState<ChartNote | undefined>();
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-  const filteredData = data?.time_series || [];
+  const filteredData = useMemo(() => data?.time_series || [], [data]);
   const unit = filteredData[0]?.unidad || "kWh";
 
   // Notes CRUD functions
@@ -124,7 +124,7 @@ export default function ChartXylem({
     return { incrementalValues: values, dateLabels: labels, rawIncrementalData: rawData };
   }, [filteredData]);
 
-  const calculateRollingMin = (values: number[]): number[] => {
+  const calculateRollingMin = useCallback((values: number[]): number[] => {
     if (!values || values.length === 0) return [];
 
     const n = values.length;
@@ -149,7 +149,7 @@ export default function ChartXylem({
     }
 
     return result;
-  };
+  }, [windowThreshold]);
 
   const lossValues = useMemo(() => {
     if (incrementalValues.length === 0) return [];
@@ -166,7 +166,7 @@ export default function ChartXylem({
         : hour >= startHour || hour < endHour;
       return isNightHour ? val : 0;
     });
-  }, [incrementalValues, lossMode, windowThreshold, startHour, endHour, rawIncrementalData]);
+  }, [incrementalValues, lossMode, windowThreshold, startHour, endHour, rawIncrementalData, calculateRollingMin]);
 
   const stats = useMemo(() => {
     if (incrementalValues.length === 0) {
@@ -658,9 +658,9 @@ export default function ChartXylem({
         dateRange={
           filteredData.length > 0
             ? {
-                min: filteredData[0].timestamp,
-                max: filteredData[filteredData.length - 1].timestamp,
-              }
+              min: filteredData[0].timestamp,
+              max: filteredData[filteredData.length - 1].timestamp,
+            }
             : undefined
         }
       />

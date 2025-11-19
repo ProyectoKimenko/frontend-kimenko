@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import * as XLSX from "xlsx";
 import ChartXylem from "@/components/analysis/chartXylem";
-import { Upload, FileSpreadsheet, BarChart3, AlertCircle, CheckCircle, Trash2, Calendar, Clock } from "lucide-react";
+import { FileSpreadsheet, BarChart3, AlertCircle, CheckCircle, Trash2, Calendar, Clock } from "lucide-react";
 
 interface XylemData {
     timestamp: string;
@@ -220,7 +220,7 @@ export default function XylemPage() {
                                 className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all ${dragActive
                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
                                     : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
-                                }`}
+                                    }`}
                                 onDragEnter={(e) => handleDragEvents(e, 'enter')}
                                 onDragLeave={(e) => handleDragEvents(e, 'leave')}
                                 onDragOver={(e) => handleDragEvents(e, 'over')}
