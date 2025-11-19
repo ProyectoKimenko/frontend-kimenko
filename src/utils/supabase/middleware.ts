@@ -117,7 +117,11 @@ export async function updateSession(request: NextRequest) {
 
   // Registrar errores de autenticación para depuración (solo en desarrollo)
   if (error && process.env.NODE_ENV === 'development') {
-    console.warn('Error de autenticación de Supabase en middleware:', error instanceof Error ? error.message : 'Unknown error')
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    // Ignorar el error "Auth session missing!" ya que es esperado para usuarios no autenticados
+    if (errorMessage !== 'Auth session missing!') {
+      console.warn('Error de autenticación de Supabase en middleware:', errorMessage)
+    }
   }
 
   // Add user info to headers for client-side optimization

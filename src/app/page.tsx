@@ -4,96 +4,67 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
-import { useAuth } from '@/hooks/useAuth'
-import { ArrowRight, Droplets, BarChart3, Shield } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Droplets, BarChart3, Shield, ArrowRight } from 'lucide-react'
 
 export default function Home() {
-  const { isAuthenticated } = useAuth() || { isAuthenticated: false }
-  const [waterSaved, setWaterSaved] = useState(0)
-  const targetWaterSaved = 1_251_240 // 1.25 millones de litros
-
-  useEffect(() => {
-    const duration = 2500 // ms
-    const steps = 60
-    const increment = targetWaterSaved / steps
-    let current = 0
-    const timer = setInterval(() => {
-      current += increment
-      if (current >= targetWaterSaved) {
-        setWaterSaved(targetWaterSaved)
-        clearInterval(timer)
-      } else {
-        setWaterSaved(Math.floor(current))
-      }
-    }, duration / steps)
-    return () => clearInterval(timer)
-  }, [])
 
   return (
     <div className="min-h-screen bg-gray-900 relative">
       <div className="fixed inset-0 z-0">
         <Image
-          src="/background.png"
+          src="/fondo-kimenko.png"
           alt="Fondo Kimenko"
           fill
           sizes="100vw"
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-black/75" />
+        {/* Overlay removed as per request */}
       </div>
-      
+
       <Navbar />
-      
-      <section className="pt-24 pb-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 shadow-xl text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
-              Gestión Inteligente
-              <span className="block text-blue-300">de agua</span>
+
+      <section className="relative z-10 h-screen flex items-center">
+        <div className="max-w-7xl mx-auto px-6 w-full">
+          <div className="max-w-4xl">
+            {/* Iconos de gotas */}
+            <div className="flex justify-start mb-6">
+              <Image
+                src="/gotas-agua.png"
+                alt="Gotas de agua"
+                width={250}
+                height={120}
+                className="object-contain object-left"
+                priority
+              />
+            </div>
+
+            <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6 uppercase tracking-wide">
+              Medir para
+              <br />
+              gestionar mejor.
             </h1>
-            
-            <p className="text-xl md:text-2xl text-white mb-8">
-              Monitorea, analiza y controla el uso de agua de tus instalaciones en
-              segundos.
-              Tecnología amigable para decisiones eficientes.
+
+            <p className="text-xl md:text-2xl text-white mb-12 font-light max-w-2xl">
+              <span className="font-bold">Sistemas inteligentes</span> de monitoreo y control del agua para
+              tus infraestructuras.
             </p>
 
-            {/* Contador de agua ahorrada */}
-            <div className="mb-8">
-              <p className="text-sm text-gray-100 mb-2">Agua ahorrada con Kimenko</p>
-              <div className="text-4xl md:text-5xl font-bold text-blue-300 tabular-nums">
-                {waterSaved.toLocaleString('es-CL')}
-                <span className="text-2xl ml-2">L</span>
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {isAuthenticated ? (
-                <Link 
-                  href="/admin" 
-                  className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white font-semibold transition-all shadow-lg hover:shadow-xl"
-                >
-                  Ir al panel
-                  <ArrowRight className="ml-2" size={20} />
-                </Link>
-              ) : (
-                <Link 
-                  href="/login" 
-                  className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white font-semibold transition-all shadow-lg hover:shadow-xl"
-                >
-                  Comenzar ahora
-                  <ArrowRight className="ml-2" size={20} />
-                </Link>
-              )}
-              <Link 
-                href="/producto" 
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/5 backdrop-blur-sm hover:bg-white/10 text-white font-semibold transition-all border border-white/10 hover:border-white/20 shadow-lg"
-              >
-                Conocer más
-              </Link>
-            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mt-12">
+            <Link
+              href="/producto"
+              className="flex items-center justify-center w-48 h-12 border border-white text-white font-medium text-[15px] hover:bg-white/10 transition-all uppercase"
+            >
+              Producto
+            </Link>
+            <Link
+              href="/contacto"
+              className="flex items-center justify-center w-48 h-12 border border-white text-white font-medium text-[15px] hover:bg-white/10 transition-all uppercase"
+            >
+              Contacto
+            </Link>
           </div>
         </div>
       </section>
@@ -103,10 +74,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 shadow-xl">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
+              <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wide">
                 Todo lo que necesitas en un solo lugar
               </h2>
-              <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto">
+              <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto font-light">
                 Plataforma integral diseñada para informar consumos y pérdidas, simplificando la gestión del agua.
               </p>
             </div>
@@ -162,8 +133,8 @@ export default function Home() {
             </div>
 
             <div className="text-center mt-12">
-              <Link 
-                href="/producto" 
+              <Link
+                href="/producto"
                 className="inline-flex items-center text-blue-300 hover:text-blue-200 font-semibold text-lg group"
               >
                 Descubre todas las funcionalidades
@@ -174,14 +145,14 @@ export default function Home() {
         </div>
       </section>
 
-    
+
       <section className="py-16 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
+            <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wide">
               Compatible con todo tipo de infraestructura
             </h2>
-            <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto font-light">
               Si tu recinto tiene uso bajo o intensivo de agua por parte de sus usuarios, nuestra solución puede ayudarte
             </p>
           </div>
@@ -189,17 +160,17 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
 
             <div className="relative h-48 rounded-xl overflow-hidden group">
-                <Image
-                  src="/infraestructura-comercial.png"
-                  alt="Infraestructura habitacional y comercial"
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-semibold text-center text-sm">Infraestructura habitacional y comercial</h3>
-                </div>
+              <Image
+                src="/infraestructura-comercial.png"
+                alt="Infraestructura habitacional y comercial"
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <h3 className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-semibold text-center text-sm">Infraestructura habitacional y comercial</h3>
               </div>
+            </div>
             <div className="relative h-48 rounded-xl overflow-hidden group">
               <Image
                 src="/restaurante.png"
@@ -259,10 +230,10 @@ export default function Home() {
       <section className="py-16 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
+            <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wide">
               Confían en nosotros
             </h2>
-            <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto font-light">
               Organizaciones que ya están ahorrando agua con nosotros
             </p>
           </div>

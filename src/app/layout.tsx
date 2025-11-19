@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 // import PerformanceMonitor from "@/components/PerformanceMonitor";
+
+const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Kimenko - Análisis de Caudal y Datos",
@@ -24,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className="antialiased">
+      <body className={`${outfit.className} antialiased`}>
         {children}
         {/* <PerformanceMonitor /> */}
       </body>
