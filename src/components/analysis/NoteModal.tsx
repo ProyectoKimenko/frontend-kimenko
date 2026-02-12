@@ -216,7 +216,7 @@ export default function NoteModal({
           </button>
           <button
             onClick={handleSave}
-            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+            className="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors"
           >
             {note ? "Guardar Cambios" : "Agregar Nota"}
           </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, MapPin, Play, AlertTriangle } from "lucide-react";
+import { Calendar, MapPin, Play, AlertTriangle, CheckCircle } from "lucide-react";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 import { forceScrape } from "@/helpers/fetchPlaces";
 
@@ -53,15 +53,15 @@ export default function ForceScrapeForm({ places }: ForceScrapeFormProps) {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+        <div className="bg-black/30 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
+            <div className="p-6 border-b border-white/10 bg-white/5">
                 <div className="flex items-center gap-3 mb-2">
-                    <Play className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    <Play className="h-5 w-5 text-orange-400" />
+                    <h3 className="text-lg font-semibold text-white">
                         Forzar Scraping de Datos
                     </h3>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-400">
                     Ejecute manualmente el scraping de datos para un lugar específico en un rango de fechas, recuerda que el scraping puede tardar varios minutos en verse reflejado en la interfaz.
                 </p>
             </div>
@@ -69,27 +69,27 @@ export default function ForceScrapeForm({ places }: ForceScrapeFormProps) {
             <form className="p-6" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
                             Lugar
                         </label>
                         <select
                             value={placeId}
                             onChange={(e) => setPlaceId(e.target.value ? Number(e.target.value) : "")}
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                            className="w-full rounded-lg border border-white/20 px-3 py-2.5 text-sm bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             required
                         >
-                            <option value="" disabled>
+                            <option value="" disabled className="bg-gray-800">
                                 Seleccione un lugar
                             </option>
                             {places && places.length > 0 ? (
                                 places.map((place: Place) => (
-                                    <option key={place.id} value={place.id}>
+                                    <option key={place.id} value={place.id} className="bg-gray-800">
                                         {place.name || `Lugar ${place.id}`}
                                     </option>
                                 ))
                             ) : (
-                                <option value="" disabled>
+                                <option value="" disabled className="bg-gray-800">
                                     No hay lugares disponibles
                                 </option>
                             )}
@@ -97,7 +97,7 @@ export default function ForceScrapeForm({ places }: ForceScrapeFormProps) {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             Fecha de inicio
                         </label>
@@ -105,13 +105,13 @@ export default function ForceScrapeForm({ places }: ForceScrapeFormProps) {
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                            className="w-full rounded-lg border border-white/20 px-3 py-2.5 text-sm bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             required
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             Fecha de fin
                         </label>
@@ -119,26 +119,26 @@ export default function ForceScrapeForm({ places }: ForceScrapeFormProps) {
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                            className="w-full rounded-lg border border-white/20 px-3 py-2.5 text-sm bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             required
                         />
                     </div>
                 </div>
 
                 {error && (
-                    <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
                         <div className="flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                            <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+                            <AlertTriangle className="h-4 w-4 text-red-400" />
+                            <span className="text-sm text-red-300">{error}</span>
                         </div>
                     </div>
                 )}
 
                 {success && (
-                    <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
                         <div className="flex items-center gap-2">
-                            <Play className="h-4 w-4 text-green-600 dark:text-green-400" />
-                            <span className="text-sm text-green-700 dark:text-green-300">
+                            <CheckCircle className="h-4 w-4 text-green-400" />
+                            <span className="text-sm text-green-300">
                                 Scraping iniciado exitosamente
                             </span>
                         </div>
@@ -149,11 +149,11 @@ export default function ForceScrapeForm({ places }: ForceScrapeFormProps) {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                        className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-orange-600/50 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
                     >
                         {loading ? (
                             <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                                 Ejecutando scraping...
                             </>
                         ) : (

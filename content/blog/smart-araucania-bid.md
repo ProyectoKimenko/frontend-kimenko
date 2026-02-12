@@ -6,15 +6,13 @@ category: "Alianzas"
 tags: ["agua", "IoT", "ciudades inteligentes", "sostenibilidad", "alianzas"]
 coverImage: "/blog-images/smart-araucania-bid/cover.jpg"
 author: "Equipo Kimenko"
+readingTime: 2
 ---
 
-# Kimenko forma parte de iniciativa patrocinada por el Banco Interamericano de Desarrollo  
+Desde esta semana, **Kimenko forma parte de Smart Araucanía**, una iniciativa patrocinada por el **Banco Interamericano de Desarrollo (BID)** y liderada por la **Universidad de La Frontera (UFRO)**.
 
-¡Comenzamos septiembre con excelentes noticias! Desde esta semana, **Kimenko forma parte de Smart Araucanía**, una iniciativa patrocinada por el **Banco Interamericano de Desarrollo (BID)** y liderada por la **Universidad de La Frontera (UFRO)**.  
+El propósito del proyecto es **resolver problemáticas sociales y medioambientales en las ciudades**, mejorando la calidad de vida de sus habitantes mediante el uso de tecnologías como el **Internet de las Cosas (IoT)**, para transformarlas en **ciudades inteligentes**, con proyección desde Chile hacia el mundo.
 
-El propósito del proyecto es **resolver problemáticas sociales y medioambientales en las ciudades**, mejorando la calidad de vida de sus habitantes mediante el uso de tecnologías como el **Internet de las Cosas (IoT)**, para transformarlas en **ciudades inteligentes**, con proyección desde Chile hacia el mundo.  
+## Nuestro rol en la iniciativa
 
----
-
-## Nuestro rol en la iniciativa  
-En Kimenko, nos sentimos honrados de colaborar con este gran proyecto, aportando desde la **gestión eficiente del agua en infraestructuras urbanas**, un pilar fundamental en el desarrollo de las ciudades de hoy y del mañana.  
+En Kimenko colaboramos con este proyecto aportando desde la **gestión eficiente del agua en infraestructuras urbanas**, un pilar fundamental en el desarrollo de las ciudades de hoy y del mañana.

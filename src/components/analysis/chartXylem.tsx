@@ -561,8 +561,8 @@ export default function ChartXylem({
           <button
             onClick={() => setChartType("line")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${chartType === "line"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+              ? "bg-cyan-600 text-white"
+              : "bg-white/10 text-white hover:bg-white/20"
               }`}
           >
             Curva
@@ -570,8 +570,8 @@ export default function ChartXylem({
           <button
             onClick={() => setChartType("bar")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${chartType === "bar"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+              ? "bg-cyan-600 text-white"
+              : "bg-white/10 text-white hover:bg-white/20"
               }`}
           >
             Barras
@@ -633,7 +633,7 @@ export default function ChartXylem({
         <button
           onClick={exportCSV}
           disabled={!data?.time_series?.length}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
           Exportar CSV

@@ -4,9 +4,9 @@
   "private": true,
   "description": "Sistema profesional de análisis de caudal - Kimenko",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "NODE_OPTIONS='--no-webstorage' next dev",
+    "build": "NODE_OPTIONS='--no-webstorage' next build",
+    "start": "NODE_OPTIONS='--no-webstorage' next start",
     "lint": "next lint"
   },
   "dependencies": {

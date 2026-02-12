@@ -117,10 +117,10 @@ export default function FlowReporterAnalysis() {
     const handleReport = useCallback(async () => {
         setError(null);
         setReportSuccess(false);
-        
+
         // Validate parameters
         if (!validateParams()) return;
-        
+
         setLoadingReport(true);
         try {
             const reportResult = await fetchReport({
@@ -130,13 +130,13 @@ export default function FlowReporterAnalysis() {
                 year: year,
                 place_id: Number(placeId),
             });
-            
+
             console.log('Report result:', reportResult);
             setReportSuccess(true);
-            
+
             // Auto-hide success message after 3 seconds
             setTimeout(() => setReportSuccess(false), 3000);
-            
+
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : "Error al procesar el informe";
             setError(errorMessage);
@@ -148,17 +148,17 @@ export default function FlowReporterAnalysis() {
     return (
         <div className="max-w-7xl mx-auto space-y-6">
             {/* Enhanced Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+            <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/10">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                            <Droplets className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        <div className="flex items-center justify-center w-12 h-12 bg-cyan-500/20 rounded-xl">
+                            <Droplets className="h-6 w-6 text-cyan-400" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h1 className="text-2xl font-bold text-white">
                                 Análisis de FlowReporter
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-400">
+                            <p className="text-gray-400">
                                 Análisis avanzado de caudal y detección de pérdidas de agua
                             </p>
                         </div>
@@ -167,7 +167,7 @@ export default function FlowReporterAnalysis() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={exportData}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
                             >
                                 <Download className="h-4 w-4" />
                                 Exportar
@@ -175,7 +175,7 @@ export default function FlowReporterAnalysis() {
                             <button
                                 onClick={handleAnalysis}
                                 disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+                                className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 border border-white/20"
                             >
                                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                                 Actualizar
@@ -187,7 +187,7 @@ export default function FlowReporterAnalysis() {
 
             {/* Error Display */}
             {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg flex items-center gap-2" role="alert">
+                <div className="bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 px-4 py-3 rounded-lg flex items-center gap-2" role="alert">
                     <AlertTriangle className="h-5 w-5 flex-shrink-0" />
                     <span>{error}</span>
                 </div>
@@ -195,21 +195,21 @@ export default function FlowReporterAnalysis() {
 
             {/* Success Display */}
             {reportSuccess && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg flex items-center gap-2" role="alert">
+                <div className="bg-green-500/20 backdrop-blur-md border border-green-500/30 text-green-200 px-4 py-3 rounded-lg flex items-center gap-2" role="alert">
                     <CheckCircle className="h-5 w-5 flex-shrink-0" />
                     <span>Informe procesado exitosamente</span>
                 </div>
             )}
 
             {/* Chart Display */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-black/30 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
                 {analysis ? (
                     <Chart data={analysis} />
                 ) : (
                     <div className="p-8 flex items-center justify-center h-[500px]">
-                        <div className="text-center text-gray-500 dark:text-gray-400">
-                            <Droplets className="mx-auto h-16 w-16 mb-4 text-gray-100 dark:text-gray-600" />
-                            <h3 className="text-lg font-medium mb-2">Sin datos de análisis</h3>
+                        <div className="text-center text-gray-400">
+                            <Droplets className="mx-auto h-16 w-16 mb-4 text-white/10" />
+                            <h3 className="text-lg font-medium mb-2 text-white">Sin datos de análisis</h3>
                             <p className="text-sm">Configure los parámetros y ejecute el análisis para visualizar los resultados</p>
                         </div>
                     </div>
@@ -233,7 +233,7 @@ export default function FlowReporterAnalysis() {
                 onStartWeekChange={setStartWeek}
                 onEndWeekChange={setEndWeek}
                 onWindowSizeChange={setWindowSize}
-                onAnalysisSubmit={handleAnalysis}   
+                onAnalysisSubmit={handleAnalysis}
                 onReportSubmit={handleReport}
             />
             {/* New Place Form */}
@@ -243,4 +243,4 @@ export default function FlowReporterAnalysis() {
 
         </div>
     );
-} 
+}

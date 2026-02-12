@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
-import { Droplets, BarChart3, Shield, ArrowRight } from 'lucide-react'
+import { Droplets, BarChart3, Shield, ArrowRight, Linkedin } from 'lucide-react'
 
 export default function Home() {
 
@@ -77,58 +77,70 @@ export default function Home() {
               <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wide">
                 Todo lo que necesitas en un solo lugar
               </h2>
-              <p className="mt-4 text-lg text-gray-100 max-w-2xl mx-auto font-light">
+              <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto font-light">
                 Plataforma integral diseñada para informar consumos y pérdidas, simplificando la gestión del agua.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg text-center">
-                <div className="w-14 h-14 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto">
+            {/* 2 cards principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg">
+                <div className="w-14 h-14 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                   <Droplets className="text-blue-300" size={28} />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">
                   Monitoreo en tiempo real
                 </h3>
-                <p className="text-gray-100 text-center">
+                <p className="text-gray-300">
                   Visualiza el consumo y detecta anomalías al instante con alertas automáticas.
                 </p>
               </div>
 
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg text-center">
-                <div className="w-14 h-14 bg-green-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg">
+                <div className="w-14 h-14 bg-green-500/20 rounded-lg flex items-center justify-center mb-4">
                   <BarChart3 className="text-green-300" size={28} />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">
                   Análisis inteligente
                 </h3>
-                <p className="text-gray-100 text-center">
+                <p className="text-gray-300">
                   Reportes detallados y KPIs para tomar decisiones basadas en datos reales.
                 </p>
               </div>
+            </div>
 
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg text-center">
-                <div className="w-14 h-14 bg-orange-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto">
-                  <Shield className="text-orange-300" size={28} />
+            {/* 2 cards secundarias */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Shield className="text-orange-300" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Integración con sistemas existentes
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Aporta valor a medidores inteligentes y sistemas de monitoreo con un asistente virtual que resumirá los indicadores claves de tus instalaciones.
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">
-                  Integración con sistemas existentes
-                </h3>
-                <p className="text-gray-100 text-center">
-                  Aporta valor a medidores inteligentes y sistemas de monitoreo con un asistente virtual que resumirá los indicadores claves de tus instalaciones.
-                </p>
               </div>
 
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg text-center">
-                <div className="w-14 h-14 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4 mx-auto">
-                  <Shield className="text-purple-300" size={28} />
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 shadow-lg">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Shield className="text-purple-300" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Control automático
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Opción de configurar apertura/cierre de flujo de agua según necesidades.
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">
-                  Control automático
-                </h3>
-                <p className="text-gray-100 text-center">
-                  Opción de configurar apertura/cierre de flujo de agua según necesidades.
-                </p>
               </div>
             </div>
 
@@ -313,7 +325,7 @@ export default function Home() {
               <Image src="/logo-kimenko-blanco.png" alt="Kimenko" width={140} height={140} />
               <p className="text-gray-400">Gestión Inteligente de Agua</p>
             </div>
-            <div className="flex gap-6">
+            <div className="flex gap-6 items-center">
               <Link href="/producto" className="text-gray-400 hover:text-white transition-colors">
                 Producto
               </Link>
@@ -326,6 +338,15 @@ export default function Home() {
               <Link href="/contacto" className="text-gray-400 hover:text-white transition-colors">
                 Contacto
               </Link>
+              <a
+                href="https://www.linkedin.com/company/kimenko/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="LinkedIn de Kimenko"
+              >
+                <Linkedin size={20} />
+              </a>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-white/10 text-center text-gray-400">

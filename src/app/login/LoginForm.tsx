@@ -83,7 +83,7 @@ export default function LoginForm() {
                             Accede a tu panel de administración de Kimenko
                         </p>
                         {redirectTo !== '/admin' && (
-                            <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+                            <p className="text-sm text-cyan-600 dark:text-cyan-400 mt-2">
                                 Necesitas autenticarte para acceder a esta página
                             </p>
                         )}
@@ -120,7 +120,7 @@ export default function LoginForm() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 placeholder="tu@email.com"
                             />
                         </div>
@@ -140,7 +140,7 @@ export default function LoginForm() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     disabled={loading}
-                                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -161,7 +161,7 @@ export default function LoginForm() {
                         <button
                             type="submit"
                             disabled={loading || !email || !password}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-gradient-to-r from-cyan-600 to-cyan-700 text-white font-bold text-lg rounded-xl hover:from-cyan-700 hover:to-cyan-800 focus:ring-4 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {loading ? (
                                 <>
@@ -178,7 +178,7 @@ export default function LoginForm() {
                     <div className="text-center">
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             ¿Problemas para acceder?{' '}
-                            <button className="text-blue-600 dark:text-blue-400 hover:underline">
+                            <button className="text-cyan-600 dark:text-cyan-400 hover:underline">
                                 Contacta soporte
                             </button>
                         </p>
