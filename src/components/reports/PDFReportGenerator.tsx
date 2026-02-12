@@ -227,7 +227,7 @@ export default function PDFReportGenerator({
         <button
             onClick={generateCleanReport}
             disabled={isGenerating}
-            className={`flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm disabled:cursor-not-allowed ${className}`}
+            className={`flex items-center justify-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-600/50 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm disabled:cursor-not-allowed ${className}`}
         >
             {isGenerating ? (
                 <>

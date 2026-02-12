@@ -6,20 +6,19 @@ category: "Soluciones"
 tags: ["agua", "transformación digital", "eficiencia hídrica", "sostenibilidad"]
 coverImage: "/blog-images/transformacion-medidores/cover.jpg"
 author: "Equipo Kimenko"
+readingTime: 2
 ---
 
-# Transformación digital de tus medidores y remarcadores  
+Si tu organización quiere llevar la información de sus **medidores y remarcadores de agua** directamente a sus computadores o teléfonos, con acceso en línea desde cualquier lugar, podemos ayudarte.
 
-Si tu organización quiere llevar la información de sus **medidores y remarcadores de agua** directamente a sus computadores o teléfonos, con acceso en línea desde cualquier lugar, podemos ayudarte.  
+Nuestra solución permite visualizar datos **gráficos y detallados de consumos** por minuto, horas, días y meses. Con esta información podrás:
 
-Nuestra solución permite visualizar datos **gráficos y detallados de consumos** por minuto, horas, días y meses. Con esta información podrás:  
-- Comprender ineficiencias en tus operaciones.  
-- Elaborar planes de **eficiencia hídrica**.  
-- Apoyar tus acciones de **sostenibilidad** con información precisa.  
+- Comprender ineficiencias en tus operaciones
+- Elaborar planes de **eficiencia hídrica**
+- Apoyar tus acciones de **sostenibilidad** con información precisa
 
----
+## Plataforma en línea
 
-## Plataforma en línea  
-Integramos tus medidores de agua a nuestra **plataforma online**, entregando información clara y confiable para la toma de decisiones.  
+Integramos tus medidores de agua a nuestra **plataforma online**, entregando información clara y confiable para la toma de decisiones.
 
-Si necesitas asesoría o resolver dudas, estaremos felices de apoyarte.  
+Si necesitas asesoría o resolver dudas, contáctanos.

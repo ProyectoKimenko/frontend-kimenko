@@ -3,9 +3,15 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 // import PerformanceMonitor from "@/components/PerformanceMonitor";
 
-const outfit = Outfit({ subsets: ["latin"] });
+const outfit = Outfit({
+  subsets: ["latin"],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+  preload: true,
+});
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://kimenko.cl'),
   title: "Kimenko - Análisis de Caudal y Datos",
   description: "Sistema profesional de análisis de caudal desarrollado por Kimenko",
   keywords: ["análisis", "caudal", "Kimenko", "datos", "gráficos"],

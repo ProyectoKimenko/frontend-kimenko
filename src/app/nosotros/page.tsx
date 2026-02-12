@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
-import { Target, Eye, Heart, Award, Clock, Lightbulb } from 'lucide-react'
+import { Target, Eye, Heart, Award, Clock, Lightbulb, Linkedin } from 'lucide-react'
 // import { useState } from 'react'
 // import { useAuth } from '@/hooks/useAuth'
 
@@ -12,19 +12,23 @@ export default function NosotrosPage() {
   // const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-900 relative">
-      <div className="fixed inset-0 z-0">
-        <Image
-          src="/nuestra-mision.png"
-          alt="Fondo Kimenko"
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/75" />
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #030712 0%, #0a1628 40%, #0c2340 70%, #0f3460 100%)' }}>
+      {/* Underwater light rays effect */}
+      <div className="absolute top-0 left-1/4 w-[200px] h-[600px] bg-gradient-to-b from-cyan-400/10 via-cyan-400/5 to-transparent rotate-[15deg] blur-[40px] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 w-[150px] h-[500px] bg-gradient-to-b from-blue-400/10 via-blue-400/5 to-transparent rotate-[-10deg] blur-[30px] pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[180px] h-[550px] bg-gradient-to-b from-cyan-300/8 via-cyan-300/3 to-transparent rotate-[20deg] blur-[35px] pointer-events-none" />
+
+      {/* Subtle wave overlay at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-[300px] pointer-events-none opacity-30">
+        <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{ height: '100%' }}>
+          <path fill="rgba(6, 182, 212, 0.15)" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,218.7C672,235,768,245,864,234.7C960,224,1056,192,1152,181.3C1248,171,1344,181,1392,186.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+          <path fill="rgba(59, 130, 246, 0.1)" d="M0,288L48,272C96,256,192,224,288,213.3C384,203,480,213,576,229.3C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+        </svg>
       </div>
-      
+
+      {/* Deep water glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1200px] h-[400px] bg-blue-600/20 rounded-full blur-[100px] pointer-events-none" />
+
       {/* Header/Navbar */}
       <Navbar />
       
@@ -40,7 +44,7 @@ export default function NosotrosPage() {
               <p className="text-xl text-white mb-8">
                 Transformamos la gestión del agua con tecnología inteligente desde 2020
               </p>
-              <p className="text-lg text-gray-100 max-w-3xl mx-auto">
+              <p className="text-lg text-gray-300 max-w-3xl mx-auto">
                 Acercamos a las organizaciones herramientas digitales que les permita tener una nueva mirada sobre el uso diario
                 de agua en sus operaciones, mediante soluciones IoT amigables y confiables que generan ahorro real y contribuyen a la
                 sostenibilidad de sus actividades y del entorno.
@@ -60,7 +64,7 @@ export default function NosotrosPage() {
                   <Target className="text-blue-300" size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Misión</h2>
-                <p className="text-gray-100 leading-relaxed">
+                <p className="text-gray-300 leading-relaxed">
                   Ayudar a masificar el acceso a soluciones que permitan optimizar el uso de un recurso escaso y vital, para la vida humana y el desarrollo de la economía, para contribuir a un uso consciente y aportar a la sostenibilidad del entorno.
                 </p>
               </div>
@@ -69,7 +73,7 @@ export default function NosotrosPage() {
                   <Eye className="text-green-300" size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Visión</h2>
-                <p className="text-gray-100 leading-relaxed">
+                <p className="text-gray-300 leading-relaxed">
                   Ser líderes en Latinoamérica en soluciones de monitoreo 
                   y gestión del agua en infraestructuras, reconocidos por nuestra innovación, 
                   simplicidad y el impacto positivo en nuestros usuarios.
@@ -81,7 +85,7 @@ export default function NosotrosPage() {
                   <Heart className="text-purple-300" size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Valores</h2>
-                <p className="text-gray-100 leading-relaxed">
+                <p className="text-gray-300 leading-relaxed">
                   Simplicidad en cada solución, compromiso con resultados 
                   medibles, innovación constante y responsabilidad con 
                   el medio ambiente y las futuras generaciones.
@@ -117,7 +121,7 @@ export default function NosotrosPage() {
                   <p className="text-blue-300 font-semibold mb-4">
                     Director Comercial & Fundador
                   </p>
-                  <p className="text-gray-100 leading-relaxed text-sm">
+                  <p className="text-gray-300 leading-relaxed text-sm">
                     Ingeniero Civil y MSc con experiencia en gestión de grandes proyectos 
                     en Chile. Postgrado en Innovación & Emprendimiento en Reino Unido y 
                     pasantía en CERN, Suiza. Lidera la transformación de la gestión de 
@@ -143,7 +147,7 @@ export default function NosotrosPage() {
                   <p className="text-blue-300 font-semibold mb-4">
                     CEO & Director en Quensus (Reino Unido)
                   </p>
-                  <p className="text-gray-100 leading-relaxed text-sm">
+                  <p className="text-gray-300 leading-relaxed text-sm">
                     MEng y PhD en Ingeniería Eléctrica y Electrónica. Fundador de 
                     empresa líder en smart water management en Reino Unido desde 2015. 
                     Impulsa la expansión en LATAM para conectar industria y sustentabilidad.
@@ -171,7 +175,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   +5 años
                 </h3>
-                <p className="text-gray-100">
+                <p className="text-gray-300">
                   Implementando soluciones IoT para monitoreo de agua
                 </p>
               </div>
@@ -183,7 +187,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   Tecnología validada
                 </h3>
-                <p className="text-gray-100">
+                <p className="text-gray-300">
                   Hardware y software probados en condiciones reales
                 </p>
               </div>
@@ -195,7 +199,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   Innovación continua
                 </h3>
-                <p className="text-gray-100">
+                <p className="text-gray-300">
                   Actualizaciones constantes con las últimas tecnologías
                 </p>
               </div>
@@ -209,7 +213,7 @@ export default function NosotrosPage() {
                 <h3 className="text-xl font-semibold text-white mb-2">
                   Reconocimientos
                 </h3>
-                <p className="text-gray-100">
+                <p className="text-gray-300">
                   Seleccionados por CORFO para implementación en entornos reales
                 </p>
               </div>
@@ -239,9 +243,40 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      <footer className="bg-black/75 backdrop-blur-sm border-t border-white/10 py-8 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-gray-400">© {new Date().getFullYear()} Kimenko. Todos los derechos reservados.</p>
+      <footer className="bg-black/75 backdrop-blur-sm border-t border-white/10 py-12 relative z-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-6 md:mb-0 flex items-center gap-4">
+              <Image src="/logo-kimenko-blanco.png" alt="Kimenko" width={140} height={140} />
+              <p className="text-gray-400">Gestión Inteligente de Agua</p>
+            </div>
+            <div className="flex gap-6 items-center">
+              <Link href="/producto" className="text-gray-400 hover:text-white transition-colors">
+                Producto
+              </Link>
+              <Link href="/nosotros" className="text-gray-400 hover:text-white transition-colors">
+                Nosotros
+              </Link>
+              <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">
+                Blog
+              </Link>
+              <Link href="/contacto" className="text-gray-400 hover:text-white transition-colors">
+                Contacto
+              </Link>
+              <a
+                href="https://www.linkedin.com/company/kimenko/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="LinkedIn de Kimenko"
+              >
+                <Linkedin size={20} />
+              </a>
+            </div>
+          </div>
+          <div className="mt-8 pt-8 border-t border-white/10 text-center text-gray-400">
+            <p>© {new Date().getFullYear()} Kimenko. Todos los derechos reservados.</p>
+          </div>
         </div>
       </footer>
     </div>

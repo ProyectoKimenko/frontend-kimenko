@@ -47,6 +47,11 @@ export function useAuth() {
         if (isInitializedRef.current) return
         isInitializedRef.current = true
 
+        // Only run on client side
+        if (typeof window === 'undefined') {
+            return
+        }
+
         const initAuth = async (): Promise<AuthState> => {
             // If already initializing, wait for it
             if (authInitPromise) {
@@ -60,7 +65,7 @@ export function useAuth() {
 
             authInitPromise = (async () => {
                 try {
-                    const supabase = createClient()
+                    const supabase = await createClient()
 
                     // Get initial session with timeout
                     const sessionPromise = supabase.auth.getSession()
@@ -136,11 +141,15 @@ export function useAuth() {
 
     // Optimized login function
     const login = useCallback(async (email: string, password: string) => {
+        if (typeof window === 'undefined') {
+            return { success: false, error: 'Not available on server' }
+        }
+
         const loadingState = { ...globalAuthState!, loading: true, error: null }
         broadcastStateChange(loadingState)
 
         try {
-            const supabase = createClient()
+            const supabase = await createClient()
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password
@@ -170,11 +179,15 @@ export function useAuth() {
 
     // Optimized logout function
     const logout = useCallback(async () => {
+        if (typeof window === 'undefined') {
+            return { success: false, error: 'Not available on server' }
+        }
+
         const loadingState = { ...globalAuthState!, loading: true, error: null }
         broadcastStateChange(loadingState)
 
         try {
-            const supabase = createClient()
+            const supabase = await createClient()
             const { error } = await supabase.auth.signOut()
 
             if (error) {
