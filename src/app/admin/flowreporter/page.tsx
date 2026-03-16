@@ -6,6 +6,7 @@ import { fetchPlaces } from "@/helpers/fetchPlaces";
 import NewPlaceForm from "@/components/flowReporter/newPlaceForm";
 import ParameterForm from "@/components/flowReporter/parameterForm";
 import ForceScrapeForm from "@/components/flowReporter/forceScrapeForm";
+import ScraperStatus from "@/components/flowReporter/scraperStatus";
 import { AnalysisResponse } from "@/types/helpers/typesFetchAnalysis";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 import { useState, useEffect, useCallback } from "react";
@@ -16,6 +17,8 @@ import {
     RefreshCw,
     CheckCircle
 } from "lucide-react";
+import ScraperGrid from "@/components/flowReporter/scraperGrid";
+import DisaggregationChart from "@/components/flowReporter/disaggregationChart";
 
 export default function FlowReporterAnalysis() {
     const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
@@ -240,6 +243,8 @@ export default function FlowReporterAnalysis() {
             <NewPlaceForm />
             {/* Force Scrape Form */}
             <ForceScrapeForm places={places} />
+            <ScraperGrid/>
+            <DisaggregationChart placeId={1} startDate="2026-01-26T20:02:21+00" endDate="2026-02-11T19:28:02+00"/>
 
         </div>
     );
