@@ -40,6 +40,9 @@ const getColor = (category: string, index: number) => {
     return fallbackColors[index % fallbackColors.length];
 };
 
+const toGradientId = (cat: string) =>
+    `grad_${cat.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
 export default function DisaggregationChart({ placeId, startDate, endDate }: Props) {
     const [data, setData] = useState<StackplotResponse | null>(null);
     const [loading, setLoading] = useState(false);
@@ -167,8 +170,8 @@ export default function DisaggregationChart({ placeId, startDate, endDate }: Pro
                             <defs>
                                 {/* Gradientes opcionales para cada categoría */}
                                 {data.categories.map((cat, i) => (
-                                    <linearGradient key={cat} id={`color${cat}`} x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={getColor(cat, i)} stopOpacity={0.8}/>
+                                    <linearGradient key={cat} id={toGradientId(cat)} x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%"  stopColor={getColor(cat, i)} stopOpacity={0.8}/>
                                         <stop offset="95%" stopColor={getColor(cat, i)} stopOpacity={0.1}/>
                                     </linearGradient>
                                 ))}
@@ -197,8 +200,7 @@ export default function DisaggregationChart({ placeId, startDate, endDate }: Pro
                                     dataKey={category}
                                     stackId="1" // Esto hace que se apilen
                                     stroke={getColor(category, index)}
-                                    fill={`url(#color${category})`}
-                                    fillOpacity={1}
+                                    fill={`url(#${toGradientId(category)})`}
                                     name={category} // Nombre para la leyenda
                                     animationDuration={1000}
                                 />
