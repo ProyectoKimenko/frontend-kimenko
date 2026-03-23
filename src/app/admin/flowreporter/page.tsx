@@ -236,7 +236,7 @@ export default function FlowReporterAnalysis() {
                 onStartWeekChange={setStartWeek}
                 onEndWeekChange={setEndWeek}
                 onWindowSizeChange={setWindowSize}
-                onAnalysisSubmit={handleAnalysis}   
+                onAnalysisSubmit={handleAnalysis}
                 onReportSubmit={handleReport}
             />
             {/* New Place Form */}
