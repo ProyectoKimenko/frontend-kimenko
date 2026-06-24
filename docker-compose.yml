@@ -1,0 +1,34 @@
+# Deploy del frontend en Dokploy (server con Traefik).
+# Las NEXT_PUBLIC_* se inyectan en build time (Next las inlinea). Definirlas en
+# un .env junto a este compose (o en el panel de Dokploy):
+#   NEXT_PUBLIC_API_URL=https://api.aguipi.com
+#   NEXT_PUBLIC_SUPABASE_URL=https://TU_PROYECTO.supabase.co
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+# Dominio: kimenko.aguipi.com (ajustable). Traefik le da SSL (letsencrypt).
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    networks:
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.kimenko-front-web.rule=Host(`kimenko.aguipi.com`)
+      - traefik.http.routers.kimenko-front-web.entrypoints=web
+      - traefik.http.routers.kimenko-front-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.kimenko-front-web.service=kimenko-front
+      - traefik.http.routers.kimenko-front-websecure.rule=Host(`kimenko.aguipi.com`)
+      - traefik.http.routers.kimenko-front-websecure.entrypoints=websecure
+      - traefik.http.routers.kimenko-front-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.kimenko-front-websecure.service=kimenko-front
+      - traefik.http.services.kimenko-front.loadbalancer.server.port=3000
+
+networks:
+  dokploy-network:
+    external: true
