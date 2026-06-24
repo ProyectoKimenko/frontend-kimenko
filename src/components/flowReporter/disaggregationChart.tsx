@@ -61,7 +61,7 @@ const COLORS: Record<string, string> = {
     Cocina: "#ef4444",
     Riego: "#22c55e",
     Otro: "#6b7280",
-    "No detectado": "#6b7280",
+    "No Detectado": "#6b7280",
 };
 
 const FALLBACK_COLORS = [
