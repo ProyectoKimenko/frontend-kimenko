@@ -46,7 +46,11 @@ type StackplotResponse = {
     data: StackplotRow[];
 };
 
-const UNDETECTED_LABEL = "No detectado";
+// Debe coincidir EXACTAMENTE con la categoría residual que escribe el backend
+// (pipeline/disaggregator.py y supabase_service.py usan "No Detectado", D mayúscula).
+// Con el casing desalineado, el residual real se trataba como categoría toggable
+// y se apilaba además una serie vacía duplicada.
+const UNDETECTED_LABEL = "No Detectado";
 
 const COLORS: Record<string, string> = {
     Ducha: "#3b82f6",

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Brain, CalendarDays, Loader2, MapPin } from "lucide-react";
 import { fetchAvailableDates } from "@/helpers/fetchPlaces";
-import { triggerModelTraining } from "@/helpers/fetchTraining";
+import { triggerModelTraining, pollTrainingStatus } from "@/helpers/fetchTraining";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 
 type Props = {
@@ -331,7 +331,26 @@ export default function TrainingSection({
                 trainingRange.endDate
             );
 
-            setTrainingSuccess(result.message || "Proceso de entrenamiento iniciado correctamente");
+            if (result.task_id) {
+                // El job encadena entrenamiento + desagregación + backfill de forma
+                // síncrona y puede tardar; hacemos polling para mostrar progreso en
+                // vez de dejar la UI aparentemente colgada.
+                setTrainingSuccess("Entrenamiento iniciado… procesando");
+                const final = await pollTrainingStatus(result.task_id, (s) => {
+                    const pct = typeof s.progress === "number" && s.progress > 0 ? ` ${s.progress}%` : "";
+                    const stage = s.stage ? ` · ${s.stage}` : "";
+                    setTrainingSuccess(`Procesando${stage}${pct}…`);
+                });
+                if (final.status === "completed") {
+                    setTrainingSuccess("Entrenamiento y desagregación completados ✓ — ya puedes ver los resultados.");
+                } else if (final.status === "failed") {
+                    setTrainingError(`El proceso falló: ${final.error || "error desconocido"}`);
+                } else {
+                    setTrainingSuccess("El proceso sigue en curso (está tardando más de lo esperado).");
+                }
+            } else {
+                setTrainingSuccess(result.message || "Proceso de entrenamiento iniciado correctamente");
+            }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "No se pudo iniciar el entrenamiento";
             setTrainingError(message);

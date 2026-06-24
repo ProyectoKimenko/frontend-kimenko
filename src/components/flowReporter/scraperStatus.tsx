@@ -31,7 +31,7 @@ interface ScraperData {
     } | null;
 }
 
-export default function ScraperStatus({ placeId, apiUrl = "http://localhost:8000" }: ScraperStatusProps) {
+export default function ScraperStatus({ placeId, apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000" }: ScraperStatusProps) {
     const scraperId = `scraper_${placeId}`;
     const [data, setData] = useState<ScraperData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);

@@ -33,8 +33,7 @@ export default function ScraperGrid() {
 
     const fetchMonitors = async () => {
         try {
-            // Asegúrate de que esta URL coincida con tu backend
-            const res = await fetch("http://localhost:8000/monitors");
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/monitors`);
             if (!res.ok) throw new Error("Error fetching monitors");
             const data = await res.json();
             setMonitors(data.monitors);
