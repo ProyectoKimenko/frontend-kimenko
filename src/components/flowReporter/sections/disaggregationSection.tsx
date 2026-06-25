@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Loader2, MapPin, BarChart3 } from "lucide-react";
 import DisaggregationChart from "@/components/flowReporter/disaggregationChart";
 import DisaggregationLabelsEditor from "@/components/flowReporter/disaggregationLabelsEditor";
-import { fetchAvailableDates } from "@/helpers/fetchPlaces";
+import { fetchAvailableDates, fetchDataRange } from "@/helpers/fetchPlaces";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 
 type Props = {
@@ -86,6 +86,25 @@ export default function DisaggregationSection({
             setDisaggPlaceId(defaultPlaceId);
         }
     }, [defaultPlaceId, disaggPlaceId]);
+
+    // Al elegir un place, inicializar el selector en el ÚLTIMO mes con datos
+    // (no en el mes actual del reloj, que suele estar vacío). Evita el "selector
+    // muerto" que veía el operador al abrir el dashboard.
+    useEffect(() => {
+        if (disaggPlaceId === "" || !Number.isFinite(Number(disaggPlaceId))) return;
+        let cancelled = false;
+        (async () => {
+            const range = await fetchDataRange(Number(disaggPlaceId));
+            if (cancelled || !range.has_data || !range.max) return;
+            const d = new Date(range.max);
+            const y = d.getUTCFullYear();
+            const m = d.getUTCMonth() + 1;
+            setDisaggYear(y);
+            setDisaggStartMonth(m);
+            setDisaggEndMonth(m);
+        })();
+        return () => { cancelled = true; };
+    }, [disaggPlaceId]);
 
     useEffect(() => {
         if (

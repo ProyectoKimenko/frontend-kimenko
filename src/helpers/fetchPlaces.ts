@@ -143,3 +143,19 @@ export const fetchAvailableDates = async (
         throw error;
     }
 };
+
+// Rango temporal con datos (measurements_realtime) de un place. Sirve para
+// inicializar el selector en el último mes CON datos, no en el mes actual vacío.
+export const fetchDataRange = async (
+    placeId: number
+): Promise<{ has_data: boolean; min?: string; max?: string }> => {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/data-range`, {
+            headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return { has_data: false };
+        return await res.json();
+    } catch {
+        return { has_data: false };
+    }
+};
