@@ -554,15 +554,28 @@ export default function DisaggregationChart({
                                         <button
                                             type="button"
                                             onClick={() => toggleCategory(category)}
-                                            className="flex min-w-0 items-center text-left"
+                                            className="flex min-w-0 items-start text-left"
                                         >
                                             <span
-                                                className="mr-2 inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                                                className="mr-2 mt-1 inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
                                                 style={{ backgroundColor: getCategoryColor(category) }}
                                             />
-                                            <span className="truncate">{getDisplayName(category)}</span>
-                                            <span className="ml-2 text-xs opacity-70">
-                                                {disabled ? "OFF" : "ON"}
+                                            <span className="min-w-0">
+                                                <span className="flex items-center gap-2">
+                                                    <span className="truncate">{getDisplayName(category)}</span>
+                                                    <span className="text-xs opacity-70">
+                                                        {disabled ? "OFF" : "ON"}
+                                                    </span>
+                                                </span>
+                                                {profile?.median_volume_l != null && (
+                                                    <span className="mt-0.5 block text-xs text-gray-400 dark:text-gray-500">
+                                                        firma: ~{Number(profile.median_volume_l).toFixed(1)} L
+                                                        {profile.mean_flow != null &&
+                                                            ` · ${Number(profile.mean_flow).toFixed(1)} L/min`}
+                                                        {profile.cv_volume != null &&
+                                                            ` · cv ${Number(profile.cv_volume).toFixed(2)}`}
+                                                    </span>
+                                                )}
                                             </span>
                                         </button>
 

@@ -5,6 +5,10 @@ export type DisaggregationProfile = {
     place_id: number;
     name: string;
     label: string | null;
+    mean_flow?: number | null;
+    mean_duration?: number | null;
+    median_volume_l?: number | null;
+    cv_volume?: number | null;
 };
 
 export const fetchDisaggregationProfiles = async (

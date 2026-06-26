@@ -9,13 +9,15 @@ import { parseCategory, UNDETECTED_LABEL } from "./disaggregationTaxonomy";
 const BASE_COLORS: Record<string, string> = {
     Ducha: "#0ea5e9", // sky-500
     Inodoro: "#6366f1", // indigo-500
+    Grifo: "#06b6d4", // cyan-500 (grifo / lavamanos)
     Lavamanos: "#06b6d4", // cyan-500
     Lavadora: "#14b8a6", // teal-500
     Lavavajillas: "#0d9488", // teal-600
     Cocina: "#0891b2", // cyan-600
     Riego: "#22d3ee", // cyan-400
-    Goteo: "#f59e0b", // amber-500 (anomalía/fuga)
+    Goteo: "#f59e0b", // amber-500 (goteo / fuga — destaca: es accionable)
     Manguera: "#22d3ee",
+    "Sin clasificar": "#94a3b8", // slate-400, de-énfasis (igual que residual)
     [UNDETECTED_LABEL]: "#94a3b8", // slate-400, de-énfasis
 };
 
