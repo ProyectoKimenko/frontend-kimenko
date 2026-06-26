@@ -162,6 +162,52 @@ export type WaterHealth = {
     nights_flagged?: number;
 };
 
+export type CalibrationEvent = {
+    id: number;
+    start_time: string;
+    flow: number;
+    duration_s: number;
+    volume_l: number;
+};
+export type CalibrationCluster = {
+    label: string;
+    n_events: number;
+    signature: { flow: number; duration_s: number; volume_l: number };
+    events: CalibrationEvent[];
+};
+
+// Eventos más típicos por cluster, para que el operador confirme el fixture real.
+export const fetchCalibrationEvents = async (
+    placeId: number
+): Promise<{ clusters: CalibrationCluster[] }> => {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/calibration-events`, {
+            headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return { clusters: [] };
+        return await res.json();
+    } catch {
+        return { clusters: [] };
+    }
+};
+
+// Confirma el fixture real de un cluster (semilla semi-supervisada).
+export const confirmFixture = async (
+    placeId: number,
+    body: { mean_flow: number; duration_s: number; volume_liters: number; confirmed_label: string }
+): Promise<boolean> => {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/confirm`, {
+            method: "POST",
+            headers: { Accept: "application/json", "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+};
+
 // Salud hídrica: detección de fuga por caudal base nocturno.
 export const fetchWaterHealth = async (placeId: number): Promise<WaterHealth | null> => {
     try {
