@@ -337,7 +337,11 @@ export default function DisaggregationSection({
                                     </div>
                                     <div className="text-xs opacity-80">
                                         {health.status === "fuga_probable"
-                                            ? `~${Math.round(health.estimated_daily_waste_l ?? 0)} L/día · base ${(health.base_flow_lmin ?? 0).toFixed(2)} L/min`
+                                            ? `~${Math.round(health.estimated_daily_waste_l ?? 0)} L/día${
+                                                  health.change_point?.detectado
+                                                      ? ` · apareció ~${health.change_point.desde}`
+                                                      : ` · base ${(health.base_flow_lmin ?? 0).toFixed(2)} L/min`
+                                              }`
                                             : `${health.nights_flagged ?? 0} noche(s) con caudal base elevado`}
                                     </div>
                                 </div>

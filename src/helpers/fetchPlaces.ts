@@ -157,9 +157,13 @@ export const fetchDataRange = async (
 export type WaterHealth = {
     status: "ok" | "revisar" | "fuga_probable" | "sin_datos";
     base_flow_lmin?: number;
+    expected_night_lmin?: number;
+    leak_flow_lmin?: number;
     estimated_daily_waste_l?: number;
+    threshold_lmin?: number;
     nights_analyzed?: number;
     nights_flagged?: number;
+    change_point?: { detectado: boolean; desde: string; antes_lmin: number; ahora_lmin: number } | null;
 };
 
 export type CalibrationEvent = {
