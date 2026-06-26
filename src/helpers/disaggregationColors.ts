@@ -17,6 +17,7 @@ const BASE_COLORS: Record<string, string> = {
     Riego: "#22d3ee", // cyan-400
     Goteo: "#f59e0b", // amber-500 (goteo / fuga — destaca: es accionable)
     Manguera: "#22d3ee",
+    "Uso simultáneo": "#a855f7", // purple-500 — superposición concurrente, no separable
     "Sin clasificar": "#94a3b8", // slate-400, de-énfasis (igual que residual)
     [UNDETECTED_LABEL]: "#94a3b8", // slate-400, de-énfasis
 };
