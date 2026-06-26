@@ -92,7 +92,6 @@ export const fetchAvailableDates = async (
         }
 
         const url = `${API_BASE_URL}/api/places/${placeId}/available-dates?year=${year}&month=${month}`;
-        console.log("fetchAvailableDates URL:", url);
 
         const response = await fetch(url, {
             method: "GET",
@@ -100,8 +99,6 @@ export const fetchAvailableDates = async (
                 Accept: "application/json",
             },
         });
-
-        console.log("fetchAvailableDates status:", response.status);
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -111,7 +108,6 @@ export const fetchAvailableDates = async (
         }
 
         const data = (await response.json()) as { available_days?: unknown[] };
-        console.log("fetchAvailableDates raw:", data);
 
         const normalizedDays = Array.isArray(data.available_days)
             ? data.available_days
@@ -132,8 +128,6 @@ export const fetchAvailableDates = async (
                 .filter((day) => Number.isInteger(day))
                 .sort((a, b) => a - b)
             : [];
-
-        console.log("fetchAvailableDates normalizedDays:", normalizedDays);
 
         return {
             available_days: normalizedDays,

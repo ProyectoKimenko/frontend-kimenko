@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Loader2, MapPin, BarChart3 } from "lucide-react";
 import DisaggregationChart from "@/components/flowReporter/disaggregationChart";
-import DisaggregationLabelsEditor from "@/components/flowReporter/disaggregationLabelsEditor";
 import { fetchAvailableDates, fetchDataRange } from "@/helpers/fetchPlaces";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 
@@ -484,7 +483,6 @@ export default function DisaggregationSection({
                         startDate={disaggRange.startDate}
                         endDate={disaggRange.endDate}
                     />
-                    <DisaggregationLabelsEditor placeId={Number(disaggPlaceId)} />
                 </>
             ) : (
                 <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">

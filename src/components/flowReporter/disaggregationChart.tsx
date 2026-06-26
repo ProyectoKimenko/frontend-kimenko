@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
     ResponsiveContainer,
     AreaChart,
@@ -7,7 +7,6 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
     ReferenceArea,
 } from "recharts";
 import {
@@ -27,6 +26,9 @@ import {
     updateDisaggregationProfileLabel,
     DisaggregationProfile,
 } from "@/helpers/fetchDisaggregationProfiles";
+import { getCategoryColor } from "@/helpers/disaggregationColors";
+import { UNDETECTED_LABEL } from "@/helpers/disaggregationTaxonomy";
+import { Droplets, TrendingUp, CalendarClock, Gauge } from "lucide-react";
 
 type Props = {
     placeId: number | string;
@@ -46,41 +48,42 @@ type StackplotResponse = {
     data: StackplotRow[];
 };
 
-// Debe coincidir EXACTAMENTE con la categoría residual que escribe el backend
-// (pipeline/disaggregator.py y supabase_service.py usan "No Detectado", D mayúscula).
-// Con el casing desalineado, el residual real se trataba como categoría toggable
-// y se apilaba además una serie vacía duplicada.
-const UNDETECTED_LABEL = "No Detectado";
-
-const COLORS: Record<string, string> = {
-    Ducha: "#3b82f6",
-    Lavamanos: "#06b6d4",
-    Inodoro: "#8b5cf6",
-    Lavadora: "#10b981",
-    Lavavajillas: "#f59e0b",
-    Cocina: "#ef4444",
-    Riego: "#22c55e",
-    Otro: "#6b7280",
-    "No Detectado": "#6b7280",
-};
-
-const FALLBACK_COLORS = [
-    "#3b82f6",
-    "#06b6d4",
-    "#8b5cf6",
-    "#10b981",
-    "#f59e0b",
-    "#ef4444",
-    "#22c55e",
-    "#ec4899",
-    "#6366f1",
-    "#14b8a6",
-];
-
-const getColor = (category: string, index: number) =>
-    COLORS[category] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length];
-
+// El color de cada categoría se deriva de su FAMILIA de fixture vía
+// getCategoryColor (helper único). UNDETECTED_LABEL se importa de la taxonomía:
+// debe coincidir EXACTO con el residual que escribe el backend ("No Detectado").
 const toGradientId = (cat: string) => `grad_${cat.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+function KpiCard({
+    icon,
+    label,
+    value,
+    sub,
+    accent,
+}: {
+    icon: ReactNode;
+    label: string;
+    value: string;
+    sub?: string;
+    accent: string;
+}) {
+    return (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/60">
+            <div className="mb-1.5 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span style={{ color: accent }}>{icon}</span>
+                {label}
+            </div>
+            <div
+                className="truncate text-xl font-bold text-gray-900 dark:text-white"
+                title={value}
+            >
+                {value}
+            </div>
+            {sub && (
+                <div className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{sub}</div>
+            )}
+        </div>
+    );
+}
 
 export default function DisaggregationChart({
     placeId,
@@ -226,6 +229,46 @@ export default function DisaggregationChart({
             return nextRow;
         });
     }, [filtered, data, disabledCategories]);
+
+    // KPIs sobre el rango visible: el "so what" antes del detalle del gráfico.
+    const kpis = useMemo(() => {
+        if (!data?.categories?.length || !filtered.length) return null;
+        const totals: Record<string, number> = {};
+        let grand = 0;
+        let peakBucket = "";
+        let peakValue = 0;
+        for (const row of filtered) {
+            let rowTotal = 0;
+            for (const cat of data.categories) {
+                const v = Number(row[cat]) || 0;
+                totals[cat] = (totals[cat] ?? 0) + v;
+                rowTotal += v;
+            }
+            grand += rowTotal;
+            if (rowTotal > peakValue) {
+                peakValue = rowTotal;
+                peakBucket = String(row.time_bucket);
+            }
+        }
+        const nd = totals[UNDETECTED_LABEL] ?? 0;
+        let topCat = "";
+        let topVal = 0;
+        for (const cat of data.categories) {
+            if (cat === UNDETECTED_LABEL) continue;
+            if ((totals[cat] ?? 0) > topVal) {
+                topVal = totals[cat] ?? 0;
+                topCat = cat;
+            }
+        }
+        return {
+            total: grand,
+            topCat,
+            topPct: grand > 0 ? (topVal / grand) * 100 : 0,
+            peakBucket,
+            peakValue,
+            coverage: grand > 0 ? (1 - nd / grand) * 100 : 0,
+        };
+    }, [data, filtered]);
 
     const handleMouseDown = (e: any) => {
         if (!e?.activeLabel) return;
@@ -456,11 +499,43 @@ export default function DisaggregationChart({
                 </div>
             )}
 
+            {kpis && (
+                <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <KpiCard
+                        icon={<Droplets className="h-4 w-4" />}
+                        label="Consumo total"
+                        value={`${kpis.total.toFixed(0)} L`}
+                        accent="#0ea5e9"
+                    />
+                    <KpiCard
+                        icon={<TrendingUp className="h-4 w-4" />}
+                        label="Artefacto principal"
+                        value={kpis.topCat ? getDisplayName(kpis.topCat) : "—"}
+                        sub={kpis.topCat ? `${kpis.topPct.toFixed(0)}% del total` : undefined}
+                        accent={kpis.topCat ? getCategoryColor(kpis.topCat) : "#94a3b8"}
+                    />
+                    <KpiCard
+                        icon={<CalendarClock className="h-4 w-4" />}
+                        label="Pico de consumo"
+                        value={kpis.peakBucket ? formatXAxis(kpis.peakBucket) : "—"}
+                        sub={`${kpis.peakValue.toFixed(0)} L`}
+                        accent="#6366f1"
+                    />
+                    <KpiCard
+                        icon={<Gauge className="h-4 w-4" />}
+                        label="Cobertura del modelo"
+                        value={`${kpis.coverage.toFixed(1)}%`}
+                        sub={`${(100 - kpis.coverage).toFixed(1)}% sin clasificar`}
+                        accent="#10b981"
+                    />
+                </div>
+            )}
+
             {data && data.categories.length > 0 && (
                 <div className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
                     {data.categories
                         .filter((category) => category !== UNDETECTED_LABEL)
-                        .map((category, index) => {
+                        .map((category) => {
                             const disabled = disabledCategories.has(category);
                             const profile = profiles.find((p) => p.name === category);
                             const isEditing =
@@ -483,7 +558,7 @@ export default function DisaggregationChart({
                                         >
                                             <span
                                                 className="mr-2 inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                                                style={{ backgroundColor: getColor(category, index) }}
+                                                style={{ backgroundColor: getCategoryColor(category) }}
                                             />
                                             <span className="truncate">{getDisplayName(category)}</span>
                                             <span className="ml-2 text-xs opacity-70">
@@ -560,7 +635,7 @@ export default function DisaggregationChart({
                             style={{ cursor: isDragging ? "col-resize" : "crosshair" }}
                         >
                             <defs>
-                                {renderedCategories.map((category, index) => (
+                                {renderedCategories.map((category) => (
                                     <linearGradient
                                         key={category}
                                         id={toGradientId(category)}
@@ -571,12 +646,12 @@ export default function DisaggregationChart({
                                     >
                                         <stop
                                             offset="5%"
-                                            stopColor={getColor(category, index)}
+                                            stopColor={getCategoryColor(category)}
                                             stopOpacity={0.8}
                                         />
                                         <stop
                                             offset="95%"
-                                            stopColor={getColor(category, index)}
+                                            stopColor={getCategoryColor(category)}
                                             stopOpacity={0.1}
                                         />
                                     </linearGradient>
@@ -606,15 +681,13 @@ export default function DisaggregationChart({
 
                             {!isDragging && <Tooltip content={<CustomTooltip />} />}
 
-                            <Legend wrapperStyle={{ paddingTop: "20px" }} />
-
-                            {renderedCategories.map((category, index) => (
+                            {renderedCategories.map((category) => (
                                 <Area
                                     key={category}
                                     type="monotone"
                                     dataKey={category}
                                     stackId="1"
-                                    stroke={getColor(category, index)}
+                                    stroke={getCategoryColor(category)}
                                     fill={`url(#${toGradientId(category)})`}
                                     name={getDisplayName(category)}
                                     animationDuration={400}
