@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Loader2, MapPin, BarChart3 } from "lucide-react";
+import { CalendarDays, Loader2, MapPin, BarChart3, ShieldCheck, AlertTriangle, Droplets } from "lucide-react";
 import DisaggregationChart from "@/components/flowReporter/disaggregationChart";
-import { fetchAvailableDates, fetchDataRange } from "@/helpers/fetchPlaces";
+import { fetchAvailableDates, fetchDataRange, fetchWaterHealth, WaterHealth } from "@/helpers/fetchPlaces";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 
 type Props = {
@@ -79,6 +79,7 @@ export default function DisaggregationSection({
     const [loadingStartDays, setLoadingStartDays] = useState(false);
     const [loadingEndDays, setLoadingEndDays] = useState(false);
     const [disaggError, setDisaggError] = useState<string | null>(null);
+    const [health, setHealth] = useState<WaterHealth | null>(null);
 
     useEffect(() => {
         if (defaultPlaceId && disaggPlaceId === "") {
@@ -101,6 +102,20 @@ export default function DisaggregationSection({
             setDisaggYear(y);
             setDisaggStartMonth(m);
             setDisaggEndMonth(m);
+        })();
+        return () => { cancelled = true; };
+    }, [disaggPlaceId]);
+
+    // Salud hídrica (detección de fuga por caudal base nocturno) del lugar elegido.
+    useEffect(() => {
+        if (disaggPlaceId === "" || !Number.isFinite(Number(disaggPlaceId))) {
+            setHealth(null);
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            const h = await fetchWaterHealth(Number(disaggPlaceId));
+            if (!cancelled) setHealth(h);
         })();
         return () => { cancelled = true; };
     }, [disaggPlaceId]);
@@ -276,18 +291,58 @@ export default function DisaggregationSection({
     return (
         <div className="space-y-6">
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                <div className="mb-4 flex items-center gap-3">
-                    <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-                        <BarChart3 className="h-5 w-5" />
+                <div className="mb-4 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                            <BarChart3 className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                Filtros de desagregación
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Selecciona un rango continuo entre dos meses
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                            Filtros de desagregación
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Selecciona un rango continuo entre dos meses
-                        </p>
-                    </div>
+
+                    {health && health.status !== "sin_datos" && (
+                        health.status === "ok" ? (
+                            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
+                                <ShieldCheck className="h-4 w-4 flex-shrink-0" />
+                                <div className="leading-tight">
+                                    <div className="font-medium">Sin fugas</div>
+                                    <div className="text-xs opacity-80">
+                                        caudal base nocturno {(health.base_flow_lmin ?? 0).toFixed(2)} L/min
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                                    health.status === "fuga_probable"
+                                        ? "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
+                                        : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+                                }`}
+                            >
+                                {health.status === "fuga_probable" ? (
+                                    <Droplets className="h-4 w-4 flex-shrink-0" />
+                                ) : (
+                                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                                )}
+                                <div className="leading-tight">
+                                    <div className="font-medium">
+                                        {health.status === "fuga_probable" ? "Posible fuga" : "Revisar consumo nocturno"}
+                                    </div>
+                                    <div className="text-xs opacity-80">
+                                        {health.status === "fuga_probable"
+                                            ? `~${Math.round(health.estimated_daily_waste_l ?? 0)} L/día · base ${(health.base_flow_lmin ?? 0).toFixed(2)} L/min`
+                                            : `${health.nights_flagged ?? 0} noche(s) con caudal base elevado`}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

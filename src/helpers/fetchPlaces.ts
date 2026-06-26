@@ -153,3 +153,24 @@ export const fetchDataRange = async (
         return { has_data: false };
     }
 };
+
+export type WaterHealth = {
+    status: "ok" | "revisar" | "fuga_probable" | "sin_datos";
+    base_flow_lmin?: number;
+    estimated_daily_waste_l?: number;
+    nights_analyzed?: number;
+    nights_flagged?: number;
+};
+
+// Salud hídrica: detección de fuga por caudal base nocturno.
+export const fetchWaterHealth = async (placeId: number): Promise<WaterHealth | null> => {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/water-health`, {
+            headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+};
