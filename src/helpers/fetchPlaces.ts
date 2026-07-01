@@ -212,6 +212,43 @@ export const confirmFixture = async (
     }
 };
 
+// Inventario de artefactos declarado por recinto (dirige el etiquetado del modelo).
+export type PlaceFixture = {
+    label: string;
+    count: number;
+    flow_lmin: number;
+    volume_l: number;
+};
+
+export const fetchPlaceConfig = async (placeId: number): Promise<PlaceFixture[]> => {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/config`, {
+            headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data.fixtures) ? data.fixtures : [];
+    } catch {
+        return [];
+    }
+};
+
+export const savePlaceConfig = async (
+    placeId: number,
+    fixtures: PlaceFixture[]
+): Promise<boolean> => {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/config`, {
+            method: "PUT",
+            headers: { Accept: "application/json", "Content-Type": "application/json" },
+            body: JSON.stringify({ fixtures }),
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+};
+
 // Salud hídrica: detección de fuga por caudal base nocturno.
 export const fetchWaterHealth = async (placeId: number): Promise<WaterHealth | null> => {
     try {

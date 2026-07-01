@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Loader2, MapPin, BarChart3, ShieldCheck, AlertTriangle, Droplets } from "lucide-react";
 import DisaggregationChart from "@/components/flowReporter/disaggregationChart";
 import CalibrationPanel from "@/components/flowReporter/calibrationPanel";
+import FixtureConfigPanel from "@/components/flowReporter/fixtureConfigPanel";
 import { fetchAvailableDates, fetchDataRange, fetchWaterHealth, WaterHealth } from "@/helpers/fetchPlaces";
 import { Place } from "@/types/helpers/typesFetchPlaces";
 
@@ -543,6 +544,7 @@ export default function DisaggregationSection({
                         startDate={disaggRange.startDate}
                         endDate={disaggRange.endDate}
                     />
+                    <FixtureConfigPanel placeId={Number(disaggPlaceId)} />
                     <CalibrationPanel placeId={Number(disaggPlaceId)} />
                 </>
             ) : (
