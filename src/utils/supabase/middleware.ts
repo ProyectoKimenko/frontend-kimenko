@@ -2,10 +2,6 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { User } from '@supabase/supabase-js'
 
-// Cache user verification for a short time to avoid repeated calls
-const userCache = new Map<string, { user: User | null, timestamp: number }>()
-const CACHE_DURATION = 5000 // 5 seconds (reduced for better logout handling)
-
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -43,55 +39,29 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Get session token for caching
-  const sessionToken = request.cookies.get('sb-access-token')?.value || 'anonymous'
-  const cached = userCache.get(sessionToken)
-  const now = Date.now()
+  // Verificar el usuario en CADA request, sin caché compartida entre requests.
+  // La caché anterior (userCache) usaba una clave constante: leía la cookie
+  // 'sb-access-token', que nunca existe (la real es sb-<project-ref>-auth-token),
+  // así que la clave era siempre 'anonymous' y TODOS los usuarios compartían una
+  // sola entrada. Un atacante haciendo polling a /admin dentro de los 5s
+  // posteriores a la navegación de un admin recibía la sesión cacheada del admin
+  // y saltaba el gate. supabase.auth.getUser() ya deduplica dentro del request.
+  let user: User | null = null
+  let error: unknown = null
+  try {
+    const authPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Tiempo de espera de autenticación agotado')), 3000)
+    )
 
-  let user = null
-  let error = null
-
-  // Check if user is coming from logout (no session token but had one before)
-  const hasSessionToken = request.cookies.has('sb-access-token')
-  if (!hasSessionToken && sessionToken === 'anonymous') {
-    // Clear cache for this anonymous user
-    userCache.delete('anonymous')
-  }
-
-  // Use cache if available and fresh
-  if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-    user = cached.user
-  } else {
-    // Get user with timeout
-    try {
-      const authPromise = supabase.auth.getUser()
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Tiempo de espera de autenticación agotado')), 3000)
-      )
-
-      const result = await Promise.race([authPromise, timeoutPromise]) as { data: { user: User | null }, error: Error }
-      user = result.data?.user || null
-      error = result.error
-
-      // Cache the result
-      userCache.set(sessionToken, { user, timestamp: now })
-
-      // Clean old cache entries
-      if (userCache.size > 100) {
-        const oldestKey = userCache.keys().next().value
-        if (oldestKey) {
-          userCache.delete(oldestKey)
-        }
-      }
-    } catch (err) {
-      error = err
-      // Cache null user on timeout/error
-      userCache.set(sessionToken, { user: null, timestamp: now })
-
-      // En desarrollo, registrar timeouts para depuración
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Timeout del middleware de autenticación:', err)
-      }
+    const result = await Promise.race([authPromise, timeoutPromise]) as { data: { user: User | null }, error: Error }
+    user = result.data?.user || null
+    error = result.error
+  } catch (err) {
+    error = err
+    // En desarrollo, registrar timeouts para depuración
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Timeout del middleware de autenticación:', err)
     }
   }
 
@@ -124,13 +94,9 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Add user info to headers for client-side optimization
-  if (user) {
-    supabaseResponse.headers.set('x-user-authenticated', 'true')
-    supabaseResponse.headers.set('x-user-id', user.id)
-  } else {
-    supabaseResponse.headers.set('x-user-authenticated', 'false')
-  }
+  // Hint de optimización para el cliente. NO exponemos x-user-id: filtraba el UUID
+  // del usuario en la cabecera de respuesta.
+  supabaseResponse.headers.set('x-user-authenticated', user ? 'true' : 'false')
 
   return supabaseResponse
 }
