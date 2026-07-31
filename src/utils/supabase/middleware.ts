@@ -1,6 +1,11 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { User } from '@supabase/supabase-js'
+
+// Tipado explícito de las cookies a escribir. No se deja a la inferencia porque
+// depende de cómo resuelva el árbol de dependencias y se rompe (implicit any)
+// al actualizar paquetes.
+type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -26,12 +31,12 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value }: CookieToSet) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
-          cookiesToSet.forEach(({ name, value }) =>
+          cookiesToSet.forEach(({ name, value }: CookieToSet) =>
             supabaseResponse.cookies.set(name, value)
           )
         },

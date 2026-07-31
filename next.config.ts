@@ -14,6 +14,26 @@ const nextConfig: NextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  // Cabeceras de seguridad: el sitio no enviaba ninguna (clickjacking posible,
+  // HTTPS no forzado a nivel navegador, sniffing de MIME).
+  // NOTA: falta Content-Security-Policy. No se añade aquí porque Next inyecta
+  // estilos/scripts inline y una CSP mal calibrada rompe la app en silencio;
+  // requiere probarse primero en Report-Only.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // 2 años + preload, recomendado por hstspreload.org
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
