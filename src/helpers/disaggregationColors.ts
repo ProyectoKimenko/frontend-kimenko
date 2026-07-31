@@ -17,6 +17,13 @@ const BASE_COLORS: Record<string, string> = {
     Riego: "#22d3ee", // cyan-400
     Goteo: "#f59e0b", // amber-500 (goteo / fuga — destaca: es accionable)
     Manguera: "#22d3ee",
+    // Artefactos del inventario del Refugio Alemán. Sin mapear caían al fallback
+    // por hash: color arbitrario y sin relación semántica con su familia.
+    Urinario: "#818cf8", // indigo-400 — familia sanitaria, distinto del inodoro
+    Lavaplatos: "#0891b2", // cyan-600 — mismo color que Cocina (es el lavaza)
+    // Llenado de acumulador: no es un uso final sino suministro. Verde para que
+    // no se confunda con consumo sanitario ni con la fuga (ámbar).
+    "Llenado de estanque": "#059669", // emerald-600
     "Uso simultáneo": "#a855f7", // purple-500 — superposición concurrente, no separable
     "Sin clasificar": "#94a3b8", // slate-400, de-énfasis (igual que residual)
     [UNDETECTED_LABEL]: "#94a3b8", // slate-400, de-énfasis
