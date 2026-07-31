@@ -212,40 +212,69 @@ export const confirmFixture = async (
     }
 };
 
-// Inventario de artefactos declarado por recinto (dirige el etiquetado del modelo).
+// Catastro declarado por recinto: inventario de artefactos (con aforo de uso y
+// horarios de operación), zona horaria local y datos de ocupación. Dirige el
+// etiquetado del modelo (train) y veta atribuciones imposibles (inferencia).
 export type PlaceFixture = {
     label: string;
     count: number;
     flow_lmin: number;
     volume_l: number;
+    // usos/día esperados del TOTAL de unidades `count` (derivado del aforo).
+    uses_per_day?: number | null;
+    // ventanas horarias LOCALES [[ini, fin], ...]; ini > fin cruza medianoche.
+    hours?: number[][] | null;
 };
 
-export const fetchPlaceConfig = async (placeId: number): Promise<PlaceFixture[]> => {
+// Ocupación del catastro: campos conocidos + lo que el operador quiera anotar.
+export type PlaceOccupancy = Record<string, unknown>;
+
+export type PlaceSettings = {
+    fixtures: PlaceFixture[];
+    timezone: string;
+    occupancy: PlaceOccupancy;
+};
+
+export const DEFAULT_PLACE_TZ = "America/Santiago";
+
+export const fetchPlaceSettings = async (placeId: number): Promise<PlaceSettings> => {
+    const empty: PlaceSettings = { fixtures: [], timezone: DEFAULT_PLACE_TZ, occupancy: {} };
     try {
         const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/config`, {
             headers: { Accept: "application/json" },
         });
-        if (!res.ok) return [];
+        if (!res.ok) return empty;
         const data = await res.json();
-        return Array.isArray(data.fixtures) ? data.fixtures : [];
+        return {
+            fixtures: Array.isArray(data.fixtures) ? data.fixtures : [],
+            timezone: typeof data.timezone === "string" && data.timezone ? data.timezone : DEFAULT_PLACE_TZ,
+            occupancy: data.occupancy && typeof data.occupancy === "object" ? data.occupancy : {},
+        };
     } catch {
-        return [];
+        return empty;
     }
 };
 
-export const savePlaceConfig = async (
+export const savePlaceSettings = async (
     placeId: number,
-    fixtures: PlaceFixture[]
-): Promise<boolean> => {
+    settings: PlaceSettings
+): Promise<{ ok: boolean; error?: string }> => {
     try {
         const res = await fetch(`${API_BASE_URL}/api/places/${placeId}/config`, {
             method: "PUT",
             headers: { Accept: "application/json", "Content-Type": "application/json" },
-            body: JSON.stringify({ fixtures }),
+            body: JSON.stringify(settings),
         });
-        return res.ok;
+        if (res.ok) return { ok: true };
+        // El backend responde 422 con detalle útil (ventana horaria/tz inválida).
+        try {
+            const data = await res.json();
+            return { ok: false, error: typeof data.detail === "string" ? data.detail : undefined };
+        } catch {
+            return { ok: false };
+        }
     } catch {
-        return false;
+        return { ok: false };
     }
 };
 
