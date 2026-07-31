@@ -20,6 +20,7 @@ const BASE_COLORS: Record<string, string> = {
     // Artefactos del inventario del Refugio Alemán. Sin mapear caían al fallback
     // por hash: color arbitrario y sin relación semántica con su familia.
     Urinario: "#818cf8", // indigo-400 — familia sanitaria, distinto del inodoro
+    Tina: "#0284c7", // sky-600 — familia baño, un tono más profundo que la ducha
     Lavaplatos: "#0891b2", // cyan-600 — mismo color que Cocina (es el lavaza)
     // Llenado de acumulador: no es un uso final sino suministro. Verde para que
     // no se confunda con consumo sanitario ni con la fuga (ámbar).
