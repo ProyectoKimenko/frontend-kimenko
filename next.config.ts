@@ -16,9 +16,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Cabeceras de seguridad: el sitio no enviaba ninguna (clickjacking posible,
   // HTTPS no forzado a nivel navegador, sniffing de MIME).
-  // NOTA: falta Content-Security-Policy. No se añade aquí porque Next inyecta
-  // estilos/scripts inline y una CSP mal calibrada rompe la app en silencio;
-  // requiere probarse primero en Report-Only.
+  // La CSP va en Report-Only a propósito: Next inyecta estilos/scripts inline y
+  // una CSP mal calibrada rompe la app EN SILENCIO. En este modo el navegador
+  // no bloquea nada, solo reporta en consola las violaciones. Cuando la consola
+  // salga limpia navegando el sitio, cambiar la cabecera a
+  // "Content-Security-Policy" para que pase a aplicarse de verdad.
   async headers() {
     return [
       {
@@ -30,6 +32,23 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+          {
+            key: "Content-Security-Policy-Report-Only",
+            value: [
+              "default-src 'self'",
+              // Next requiere inline/eval para hidratación y dev-overlay.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob:",
+              "font-src 'self' data:",
+              // API propia + Supabase (auth). Ajustar si se añaden terceros.
+              "connect-src 'self' https://api.kimenko.cl https://*.supabase.co",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+            ].join("; "),
+          },
         ],
       },
     ];
